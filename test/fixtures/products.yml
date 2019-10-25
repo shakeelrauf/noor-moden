@@ -1,0 +1,13 @@
+# Read about fixtures at http://api.rubyonrails.org/classes/ActiveRecord/FixtureSet.html
+
+one:
+  shopify_product_id: 1
+  inventory: 1
+  barcode: MyString
+  price: 9.99
+
+two:
+  shopify_product_id: 1
+  inventory: 1
+  barcode: MyString
+  price: 9.99

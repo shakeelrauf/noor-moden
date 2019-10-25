@@ -1,0 +1,187 @@
+<div class="container">
+  <p id="notice"><%= notice %></p>
+
+  <div id='barcode-scanner'></div>
+
+  <h3>Product Info</h3>
+  <div class="row">
+    <div class="col-6">
+      <table class="table table-striped">
+        <tr><td>Price:</td><td><%= @product.price %></td></tr>
+        <tr><td>Invertory:</td><td><%= @product.inventory %></td></tr>
+        <tr><td>Shopify Product Id:</td><td><%= @product.shopify_product_id %></td></tr>
+        <tr><td>Variant Id:</td><td><%= @product.variant_id %></td></tr>
+      </table>
+      <%= link_to 'Edit', edit_product_path(@product.id), class: "btn btn-primary" %>
+      <button class="btn btn-primary" id="start-scanning">Start Scanning</button>
+      <button class="btn btn-primary" onclick='printDiv();'>Print Barcode</button>
+
+      <br/>
+    </div>
+    <div class="col-6" id="barcode-dev" style="text-align: center;">
+      <%= @product.barcode.html_safe %>
+      <br/>
+      <span>000<%= @product.id %></span>
+    </div>
+  </div>
+
+  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-full" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="exampleModalLabel">Item Scanned</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+        <form id="order-form" action="/products/create_order" method="get">
+          <div class="modal-body">
+            <div class="form-group">
+              <label for="inventory-qty" class="col-form-label">Quantity:</label>
+              <input type="number" name="new_qty" class="form-control" id="inventory-qty" min="0" required="true">
+              <input type="hidden" name="actual_qty" id="actual_qty" class="form-control">
+              <input type="hidden" name="variant_id" id="variant_id" class="form-control">
+              <input type="hidden" name="product_id" id="product_id" class="form-control">
+              <input type="hidden" name="product_db_id" id="product_db_id" class="form-control">
+            </div>
+            <div class="form-group">
+              <label for="variant-price"  class="col-form-label">price:</label>
+              <input class="form-control" readonly="" value="<%= @product.price %>" id="variant-price">
+            </div>
+            <h4>Subtotal: <span id="subtotal"></span></h4>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="submit" class="btn btn-primary" id="create-order">Create Order</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+<script type="text/javascript">
+
+  function printDiv() 
+    {
+
+      var divToPrint=document.getElementById('barcode-dev');
+
+      var newWin=window.open('','Print-Window');
+
+      newWin.document.open();
+
+      newWin.document.write('<html><body onload="window.print()">'+divToPrint.innerHTML+'</body></html>');
+
+      newWin.document.close();
+
+      setTimeout(function(){newWin.close();},10);
+
+    }
+  $("#start-scanning").click(function(){
+    $('#barcode-scanner').addClass('scanner-div');
+    load_quagga();
+  });
+
+  $("#inventory-qty").keyup(function(){
+    var total = parseFloat($(this).val()) * parseFloat($("#variant-price").val());
+    if(isNaN(total)) {
+      $("#subtotal").text("0.0");
+    }
+    else if(parseInt($(this).val()) > parseInt($("#actual_qty").val())){
+      alert("Quantity can not be greater than available qty " + $("#actual_qty").val());
+      $(this).val($("#actual_qty").val());
+    } 
+    else{
+      $("#subtotal").text(total);
+    }
+  });  
+
+  function order_by_occurrence(arr) {
+    var counts = {};
+    arr.forEach(function(value){
+        if(!counts[value]) {
+            counts[value] = 0;
+        }
+        counts[value]++;
+    });
+
+    return Object.keys(counts).sort(function(curKey,nextKey) {
+        return counts[curKey] < counts[nextKey];
+    });
+  }
+
+  function load_quagga(){
+    if ($('#barcode-scanner').length > 0 && navigator.mediaDevices && typeof navigator.mediaDevices.getUserMedia === 'function') {
+
+      var last_result = [];
+      if (Quagga.initialized == undefined) {
+        Quagga.onDetected(function(result) {
+          var last_code = result.codeResult.code;
+          last_result.push(last_code);
+          if(result.codeResult.code) {
+            $("#start-scanning").hide();
+            Quagga.stop();
+            $.ajax({
+              type: "POST",
+              url: '/products/get_barcode',
+              data: { barcode: result.codeResult.code },
+              success: function(res){
+                if(res.status == 200){
+                  $("#exampleModal").modal('show');
+                  $("#variant-price").val(res.data['price']);
+                  $("#inventory-qty").attr("max", res.data['inventory']);
+                  $("#actual_qty").val(res.data['inventory']);
+                  $("#variant_id").val(res.data['variant_id']);
+                  $("#product_id").val(res.data['shopify_product_id']);
+                  $("#product_db_id").val(res.data['id']);
+                  $("#barcode-scanner").hide();
+                }
+                else{
+                  alert("There was an error while scanning please scan again by refreshing your page");
+                }
+              }
+            });
+          } 
+          else {
+              alert("Please Scan again by refreshing your page");
+          }
+        });
+      }
+
+      Quagga.init({
+        inputStream : {
+          name : "Live",
+          type : "LiveStream",
+          numOfWorkers: 0,
+          target: document.querySelector('#barcode-scanner'),
+               constraints: {
+              width: 600,
+              height: 600,
+              facing: "environment" // or user
+          }
+        },
+        decoder: {
+            readers : ['ean_reader','ean_8_reader','code_39_reader','code_39_vin_reader','codabar_reader','upc_reader','upc_e_reader','code_128_reader']
+        }
+      },function(err) {
+          if (err) { console.log(err); return }
+          Quagga.initialized = true;
+          Quagga.start();
+      });
+
+    }
+  };
+
+  // $(document).on('turbolinks:load', load_quagga);
+</script>
+
+<style type="text/css">
+  #barcode-scanner canvas.drawingBuffer, #barcode-scanner video.drawingBuffer {
+    display: none;
+  }
+
+  #barcode-scanner canvas, #barcode-scanner video {
+    width: 100%;
+    height: auto;
+  }
+</style>

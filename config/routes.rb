@@ -4,6 +4,7 @@ Rails.application.routes.draw do
   resources :products do
     post :get_barcode, on: :collection
     get :create_order, on: :collection
+    get :start_scanning, on: :collection
   end
   root :to => 'products#index'
   mount ShopifyApp::Engine, at: '/'

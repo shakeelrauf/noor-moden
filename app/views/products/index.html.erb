@@ -4,6 +4,11 @@
   <h1>Products</h1>
   <%= link_to 'New Product', new_product_path, class: "btn btn-primary", style: 'float: right;margin-bottom: 10px;' %>
 
+  <form action="/products">
+    <div class="form-group">
+      <input type="text" name="query" value="<%= params[:query] %>" class='form-control col-6' placeholder="Search using product or variant id">
+    </div>
+  </form>
   <table class="table table-striped">
     <thead>
       <tr>

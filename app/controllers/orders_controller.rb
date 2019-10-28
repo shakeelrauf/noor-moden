@@ -4,7 +4,11 @@ class OrdersController < ApplicationController
   # GET /orders
   # GET /orders.json
   def index
-    @orders = Order.all
+    if params[:query].present?
+      @orders = Order.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
+    else
+      @orders = Order.paginate(page: params[:page], per_page: 10)
+    end
   end
 
   # GET /orders/1

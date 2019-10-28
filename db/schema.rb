@@ -10,11 +10,14 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_10_25_064241) do
+ActiveRecord::Schema.define(version: 2019_10_28_080551) do
+
+  # These are extensions that must be enabled in order to support this database
+  enable_extension "plpgsql"
 
   create_table "orders", force: :cascade do |t|
-    t.integer "variant_id"
-    t.integer "product_id"
+    t.bigint "variant_id"
+    t.bigint "product_id"
     t.integer "order_qty"
     t.integer "remain_qty"
     t.decimal "total", precision: 8, scale: 2
@@ -23,13 +26,13 @@ ActiveRecord::Schema.define(version: 2019_10_25_064241) do
   end
 
   create_table "products", force: :cascade do |t|
-    t.integer "shopify_product_id"
+    t.bigint "shopify_product_id"
     t.integer "inventory"
     t.string "barcode"
     t.decimal "price", precision: 8, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.integer "variant_id"
+    t.bigint "variant_id"
   end
 
   create_table "shops", force: :cascade do |t|

@@ -11,7 +11,11 @@ class ProductsController < ApplicationController
   # GET /products
   # GET /products.json
   def index
-    @products = Product.paginate(page: params[:page], per_page: 10)
+    if params[:query].present?
+      @products = Product.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
+    else
+      @products = Product.paginate(page: params[:page], per_page: 10)
+    end
   end
 
   # GET /products/1
@@ -63,6 +67,12 @@ class ProductsController < ApplicationController
   end
 
   def update_shopify_product
+    in_house_variants = Product.where(shopify_product_id: params[:id]).collect { |c| c.variant_id }
+    shopify_variant_ids = params[:variants].collect { |c| c["id"] }
+    deleted_variant_ids = in_house_variants - shopify_variant_ids
+    if deleted_variant_ids.present?
+      Product.where(variant_id: deleted_variant_ids).destroy_all
+    end
     params[:variants].each do |variant|
       product_present = Product.where(variant_id: variant['id']).first
       if !product_present.present?
@@ -129,15 +139,31 @@ class ProductsController < ApplicationController
     qty = params["actual_qty"].to_i - params["new_qty"].to_i
     if params[:variant_id].present?
       result = update_inventory(params[:variant_id], qty)
+      Order.create(
+        variant_id: params[:variant_id],
+        product_id: params[:product_id],
+        order_qty: params[:new_qty],
+        remain_qty: qty,
+        total: params[:subtotal]
+      )
       redirect_to products_path, notice: 'Your Inventory Has been updated.'
       # render json: { status: result.code }
     else
       product = Product.find(params[:product_db_id])
       product.inventory = qty
       product.save
+      Order.create(
+        order_qty: params[:new_qty],
+        remain_qty: qty,
+        total: params[:subtotal]
+      )
       redirect_to products_path, notice: 'Your Inventory Has been updated.'
       # render json: { status: 200 }
     end
+
+  end
+
+  def start_scanning
 
   end
 

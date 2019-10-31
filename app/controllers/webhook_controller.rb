@@ -1,6 +1,7 @@
 class WebhookController < ApplicationController
 
 	skip_before_action :verify_authenticity_token
+  skip_before_action :authenticate_user!
 
 	def get_hook
 		# This token I get from https://noor-moden.myshopify.com/admin/private/apps, password is shopify-acess-token

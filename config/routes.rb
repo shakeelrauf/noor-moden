@@ -14,6 +14,6 @@ Rails.application.routes.draw do
   post 'webhook/delete_product' => 'products#delete_product'
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 
-  get '/get_hook' => 'hooks#get_hook'
+  get '/get_hook' => 'webhook#get_hook'
 
 end

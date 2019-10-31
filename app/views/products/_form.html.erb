@@ -13,6 +13,11 @@
     <% end %>
 
     <div class="form-group">
+      <%= form.label :model_number %>
+      <%= form.text_field :model_number , class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
       <%= form.label :shopify_product_id, "Shopify Product Id" %>
       <%= form.number_field :shopify_product_id , class: 'form-control' %>
     </div>

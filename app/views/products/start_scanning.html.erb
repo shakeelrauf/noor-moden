@@ -2,59 +2,57 @@
   <p id="notice"><%= notice %></p>
 
   <div id='barcode-scanner'></div>
-
-  <div class="modal fade" id="exampleModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-full" role="document">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h5 class="modal-title" id="exampleModalLabel">Item Scanned</h5>
-          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-            <span aria-hidden="true">&times;</span>
-          </button>
-        </div>
-        <form id="order-form" action="/products/create_order" method="get">
-          <div class="modal-body">
-            <div class="form-group">
-              <label for="inventory-qty" class="col-form-label">Quantity:</label>
-              <input type="number" name="new_qty" class="form-control" id="inventory-qty" min="0" required="true">
-              <input type="hidden" name="actual_qty" id="actual_qty" class="form-control">
-              <input type="hidden" name="variant_id" id="variant_id" class="form-control">
-              <input type="hidden" name="product_id" id="product_id" class="form-control">
-              <input type="hidden" name="product_db_id" id="product_db_id" class="form-control">
-            </div>
-            <div class="form-group">
-              <label for="variant-price"  class="col-form-label">price:</label>
-              <input class="form-control" readonly="" id="variant-price">
-            </div>
-            <input type="hidden" name="subtotal" id="subtotal-input">
-            <h4>Subtotal: <span id="subtotal"></span></h4>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary" id="create-order">Create Order</button>
-          </div>
-        </form>
-      </div>
-    </div>
-  </div>
+  <button class="btn btn-primary" id="scan-more-item">Scan More Items</button>
+  <br>
+  <br>
+  <form id="order-form" action="/products/create_order" method="get">
+    <table class="table">
+      <thead>
+        <tr>
+          <td>Quantity</td>
+          <td>Price</td>
+          <td>Total</td>
+        </tr>
+      </thead>
+      <tbody id="scanned-item-body">
+      </tbody>
+    </table>
+    <strong>
+      <span style="float: right;margin-right: 4%;" id="rows_subtotal">Subtotal: <b></b></span>
+    </strong>
+    <br>
+    <br>
+    <button type="submit" class="btn btn-primary" id="create-order">Create Order</button>
+  </form>
 </div>
 
 <script type="text/javascript">
-
-  $("#inventory-qty").keyup(function(){
-    var total = parseFloat($(this).val()) * parseFloat($("#variant-price").val());
+  $("#rows_subtotal").hide();
+  $('body').on('keyup', '#inventory-qty', function(){
+    var row = $(this).parent().parent();
+    var rows_subtotal = 0.0;
+    var total = parseFloat($(this).val()) * parseFloat(row.find("#variant-price").val());
     if(isNaN(total)) {
-      $("#subtotal").text("0.0");
+      row.find("#subtotal").text("0.0");
     }
-    else if(parseInt($(this).val()) > parseInt($("#actual_qty").val())){
-      alert("Quantity can not be greater than available qty " + $("#actual_qty").val());
-      $(this).val($("#actual_qty").val());
-      $("#subtotal-input").val($("#actual_qty").val());
+    else if(parseInt($(this).val()) > parseInt(row.find("#actual_qty").val())){
+      alert("Quantity can not be greater than available qty " + row.find("#actual_qty").val());
+      $(this).val(row.find("#actual_qty").val());
+      var greater_qty = parseFloat(row.find("#actual_qty").val()) * parseFloat(row.find("#variant-price").val());
+      greater_qty
+      row.find("#subtotal").text(greater_qty);
+      row.find("#subtotal-input").val(greater_qty);
     }
     else{
-      $("#subtotal").text(total);
-      $("#subtotal-input").val(total);
+      row.find("#subtotal").text(total);
+      row.find("#subtotal-input").val(total);
     }
+
+    $('#scanned-item-body tr').each(function(){
+      rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+    });
+
+    $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
   });  
 
   function order_by_occurrence(arr) {
@@ -88,14 +86,45 @@
               data: { barcode: result.codeResult.code },
               success: function(res){
                 if(res.status == 200){
-                  $("#exampleModal").modal('show');
-                  $("#variant-price").val(res.data['price']);
-                  $("#inventory-qty").attr("max", res.data['inventory']);
-                  $("#actual_qty").val(res.data['inventory']);
-                  $("#variant_id").val(res.data['variant_id']);
-                  $("#product_id").val(res.data['shopify_product_id']);
-                  $("#product_db_id").val(res.data['id']);
-                  $("#barcode-scanner").hide();
+                  var product_db_id
+                  var inventory_qty;
+                  var actual_qty;
+                  var inventory_qty;
+                  var row_exist = false;
+                  var rows_subtotal = 0.0;
+                  $('#scanned-item-body tr').each(function(){
+                    product_db_id = $(this).find("#product_db_id");
+                    if(product_db_id.length > 0){
+                      if(parseInt(product_db_id.val()) == parseInt(res.data['id'])){
+                        row_exist = true;
+                        inventory_qty = $(this).find("#inventory-qty");
+                        actual_qty = $(this).find("#actual_qty");
+                        if(parseInt(inventory_qty.val()) + 1 > parseInt(actual_qty.val())){
+                          alert("Inventory max limit reach");
+                        }else{
+                          inventory_qty.val(parseInt(inventory_qty.val()) + 1)
+                          var total = parseFloat(inventory_qty.val()) * parseFloat(res.data['price'])
+                          $(this).find("#subtotal").text(total.toFixed(2));
+                          $(this).find("#subtotal-input").val(total.toFixed(2));
+                        }
+                      }
+                    }
+                  });
+                  if(!row_exist && parseInt(res.data['inventory']) > 0){
+                    row ='<tr> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control" readonly="" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="" id="subtotal-input"> <h4>total: <span id="subtotal">'+ res.data['price'] +'</span></h4> </td></tr>';
+                      $('#scanned-item-body').append(row);
+                  }
+                  else{
+                    alert("You dont have enough inventory for this item");
+                  }
+                  $("#rows_subtotal").show();
+                  $('#scanned-item-body tr').each(function(){
+                    rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+                  });
+
+                  $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+                  $("#start-scanning").hide();
+                  load_quagga();
                 }
                 else{
                   alert("There was an error while scanning please scan again by refreshing your page");
@@ -115,7 +144,7 @@
           type : "LiveStream",
           numOfWorkers: 0,
           target: document.querySelector('#barcode-scanner'),
-               constraints: {
+            constraints: {
               width: 600,
               height: 600,
               facing: "environment" // or user
@@ -132,7 +161,10 @@
 
     }
   };
-
+  $("#scan-more-item").click(function(){
+    $("#start-scanning").show();
+    load_quagga();
+  });
   $(document).on('turbolinks:load', load_quagga);
 </script>
 

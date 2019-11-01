@@ -136,30 +136,58 @@ class ProductsController < ApplicationController
   end
 
   def create_order
-    qty = params["actual_qty"].to_i - params["new_qty"].to_i
-    if params[:variant_id].present?
-      result = update_inventory(params[:variant_id], qty)
-      Order.create(
-        variant_id: params[:variant_id],
-        product_id: params[:product_id],
-        order_qty: params[:new_qty],
-        remain_qty: qty,
-        total: params[:subtotal]
-      )
-      redirect_to products_path, notice: 'Your Inventory Has been updated.'
-      # render json: { status: result.code }
-    else
-      product = Product.find(params[:product_db_id])
-      product.inventory = qty
-      product.save
-      Order.create(
-        order_qty: params[:new_qty],
-        remain_qty: qty,
-        total: params[:subtotal]
-      )
-      redirect_to products_path, notice: 'Your Inventory Has been updated.'
-      # render json: { status: 200 }
+    db_ids = params[:product_db_id]
+    new_qtys = params[:new_qty]
+    totals = params[:subtotal]
+    actual_qtys = params[:actual_qty]
+    db_ids.zip(new_qtys, totals, actual_qtys).each do |id, new_qty, total, actual_qty|
+      qty = actual_qty.to_i - new_qty.to_i
+      product = Product.find(id)
+      if product.variant_id.present?
+        result = update_inventory(product.variant_id, qty)
+        Order.create(
+          variant_id: product.variant_id,
+          product_id: product.shopify_product_id,
+          order_qty: new_qty,
+          remain_qty: qty,
+          total: total
+        )
+      else
+        product.inventory = qty
+        product.save
+        Order.create(
+          order_qty: new_qty,
+          remain_qty: qty,
+          total: total
+        )
+      end
     end
+    redirect_to products_path, notice: 'Your Inventory Has been updated.'
+
+    # qty = params["actual_qty"].to_i - params["new_qty"].to_i
+    # if params[:variant_id].present?
+    #   result = update_inventory(params[:variant_id], qty)
+    #   Order.create(
+    #     variant_id: params[:variant_id],
+    #     product_id: params[:product_id],
+    #     order_qty: params[:new_qty],
+    #     remain_qty: qty,
+    #     total: params[:subtotal]
+    #   )
+    #   redirect_to products_path, notice: 'Your Inventory Has been updated.'
+    #   # render json: { status: result.code }
+    # else
+    #   product = Product.find(params[:product_db_id])
+    #   product.inventory = qty
+    #   product.save
+    #   Order.create(
+    #     order_qty: params[:new_qty],
+    #     remain_qty: qty,
+    #     total: params[:subtotal]
+    #   )
+    #   redirect_to products_path, notice: 'Your Inventory Has been updated.'
+    #   # render json: { status: 200 }
+    # end
 
   end
 
@@ -175,7 +203,7 @@ class ProductsController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def product_params
-      params.require(:product).permit(:shopify_product_id, :inventory, :barcode, :price, :variant_id)
+      params.require(:product).permit(:shopify_product_id, :inventory, :barcode, :price, :variant_id, :model_number)
     end
 
     def update_inventory(variant_id, qty)

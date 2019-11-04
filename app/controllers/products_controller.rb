@@ -73,43 +73,11 @@ class ProductsController < ApplicationController
     if deleted_variant_ids.present?
       Product.where(variant_id: deleted_variant_ids).destroy_all
     end
-    params[:variants].each do |variant|
-      product_present = Product.where(variant_id: variant['id']).first
-      if !product_present.present?
-        product = Product.create(shopify_product_id: variant['product_id'], 
-          variant_id: variant['id'],
-          inventory: variant['inventory_quantity'],
-          price: variant['price']
-        )
-        code = "000-" + product.id.to_s
-        barcode = Barby::Code128.new(code).to_svg(margin: 0)
-        barcode = barcode.sub!('<svg ', '<svg preserveAspectRatio="none" ')
-        product.barcode = barcode
-        product.save
-      else
-        product_present.price = variant['price']
-        product_present.inventory = variant['inventory_quantity']
-        product_present.save
-      end
-    end
+    sync_shopify_data
   end
 
   def create_product
-    params[:variants].each do |variant|
-      product_present = Product.where(variant_id: variant['id']).first
-      if !product_present.present?
-        product = Product.create(shopify_product_id: variant['product_id'], 
-          variant_id: variant['id'],
-          inventory: variant['inventory_quantity'],
-          price: variant['price']
-        )
-        code = "000-" + product.id.to_s
-        barcode = Barby::Code128.new(code).to_svg(margin: 0)
-        barcode = barcode.sub!('<svg ', '<svg preserveAspectRatio="none" ')
-        product.barcode = barcode
-        product.save
-      end
-    end
+    sync_shopify_data
   end
 
   def delete_product
@@ -196,7 +164,35 @@ class ProductsController < ApplicationController
   end
 
   private
+
     # Use callbacks to share common setup or constraints between actions.
+    def sync_shopify_data
+      params[:variants].each do |variant|
+        # product_present = Product.where(variant_id: variant['id']).first
+        product_present = Product.where(model_number: variant['sku']).first
+        if !product_present.present?
+          product = Product.create(shopify_product_id: variant['product_id'], 
+            variant_id: variant['id'],
+            inventory: variant['inventory_quantity'],
+            price: variant['price'],
+            model_number: variant['sku']
+          )
+          code = "000-" + product.id.to_s
+          barcode = Barby::Code128.new(code).to_svg(margin: 0)
+          barcode = barcode.sub!('<svg ', '<svg preserveAspectRatio="none" ')
+          product.barcode = barcode
+          product.save
+        else
+          product_present.variant_id = variant['id']
+          product_present.shopify_product_id = variant['product_id']
+          product_present.price = variant['price']
+          product_present.inventory = variant['inventory_quantity']
+          product_present.model_number = variant['sku']
+          product_present.save
+        end
+      end
+    end
+
     def set_product
       @product = Product.find(params[:id])
     end

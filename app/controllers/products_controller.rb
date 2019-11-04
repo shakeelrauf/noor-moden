@@ -57,6 +57,9 @@ class ProductsController < ApplicationController
   def update
     respond_to do |format|
       if @product.update(product_params)
+        if @product.variant_id.present?
+          update_inventory(@product.variant_id, @product.inventory)
+        end
         format.html { redirect_to @product, notice: 'Product was successfully updated.' }
         format.json { render :show, status: :ok, location: @product }
       else
@@ -88,6 +91,9 @@ class ProductsController < ApplicationController
   # DELETE /products/1.json
   def destroy
     @product.destroy
+    if @product.shopify_product_id.present?
+      delete_variant(@product.shopify_product_id, @product.variant_id)
+    end
     respond_to do |format|
       format.html { redirect_to products_url, notice: 'Product was successfully destroyed.' }
       format.json { head :no_content }
@@ -211,5 +217,11 @@ class ProductsController < ApplicationController
                },
         :headers => {
           'X-Shopify-Access-Token' => ENV['Access_Token']})
-  end
+    end
+
+    def delete_variant(product_id, variant_id)
+      @result = HTTParty.delete("https://noor-moden.myshopify.com/admin/api/2019-07/products/#{product_id}/variants/#{variant_id}.json",
+        :headers => {
+          'X-Shopify-Access-Token' => ENV['Access_Token']})
+    end
 end

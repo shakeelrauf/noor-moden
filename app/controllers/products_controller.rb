@@ -175,7 +175,8 @@ class ProductsController < ApplicationController
     def sync_shopify_data
       params[:variants].each do |variant|
         # product_present = Product.where(variant_id: variant['id']).first
-        product_present = Product.where(model_number: variant['sku']).first
+        # product_present = Product.where(model_number: variant['sku']).first
+        product_present = Product.where(model_number: variant['sku']).where.not(model_number: "").first
         if !product_present.present?
           product = Product.create(shopify_product_id: variant['product_id'], 
             variant_id: variant['id'],

@@ -58,7 +58,7 @@ class ProductsController < ApplicationController
     respond_to do |format|
       if @product.update(product_params)
         if @product.variant_id.present?
-          update_inventory(@product.variant_id, @product.inventory)
+          update_variant_price(@product.variant_id, @product.inventory, @product.price)
         end
         format.html { redirect_to @product, notice: 'Product was successfully updated.' }
         format.json { render :show, status: :ok, location: @product }
@@ -180,7 +180,7 @@ class ProductsController < ApplicationController
           product = Product.create(shopify_product_id: variant['product_id'], 
             variant_id: variant['id'],
             inventory: variant['inventory_quantity'],
-            price: variant['price'],
+            # price: variant['price'],
             model_number: variant['sku']
           )
           code = "000-" + product.id.to_s
@@ -191,7 +191,7 @@ class ProductsController < ApplicationController
         else
           product_present.variant_id = variant['id']
           product_present.shopify_product_id = variant['product_id']
-          product_present.price = variant['price']
+          # product_present.price = variant['price']
           product_present.inventory = variant['inventory_quantity']
           product_present.model_number = variant['sku']
           product_present.save
@@ -213,6 +213,18 @@ class ProductsController < ApplicationController
         :body => { 
                   "variant": {:id=> variant_id, 
                     :inventory_quantity=> qty,
+                  }
+               },
+        :headers => {
+          'X-Shopify-Access-Token' => ENV['Access_Token']})
+    end
+
+    def update_variant_price(variant_id, qty, price)
+      @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2019-07/variants/#{variant_id}.json",
+        :body => { 
+                  "variant": {:id=> variant_id, 
+                    :inventory_quantity=> qty,
+                    :price => price
                   }
                },
         :headers => {

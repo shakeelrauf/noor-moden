@@ -21,6 +21,5 @@ production:
   <<: *default
   database: noor_prod
   username: postgres
-  password: <%= ENV['PREORDER_NOW_DATABASE_PASSWORD'] %>
+  password: postgres
   pool: 15
-

@@ -1,7 +1,7 @@
 class ProductsController < ApplicationController
   before_action :set_product, only: [:show, :edit, :update, :destroy]
   skip_before_action :verify_authenticity_token
-  skip_before_action :authenticate_user!, only: [:update_shopify_product, :create_product, :delete_product]
+  skip_before_action :authenticate_user!, only: [:update_shopify_product, :create_product, :delete_product, :notify_new_customer_shopify_admin]
 
   require 'barby/barcode/code_128'
   require 'barby/outputter/ascii_outputter'
@@ -85,6 +85,10 @@ class ProductsController < ApplicationController
 
   def delete_product
     Product.where(shopify_product_id: params[:id]).destroy_all
+  end
+
+  def notify_new_customer_shopify_admin
+    CustomerMailer.send_shopify_signup_notification(params).deliver_now
   end
 
   # DELETE /products/1

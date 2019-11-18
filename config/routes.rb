@@ -3,6 +3,7 @@ Rails.application.routes.draw do
   devise_for :users
   resources :products do
     post :get_barcode, on: :collection
+    post :get_barcode_from_sku, on: :collection
     get :create_order, on: :collection
     get :start_scanning, on: :collection
   end

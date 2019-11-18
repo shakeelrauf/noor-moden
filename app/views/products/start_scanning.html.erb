@@ -5,6 +5,10 @@
   <button class="btn btn-primary" id="scan-more-item">Resfesh Scanner</button>
   <br>
   <br>
+
+  <div>
+    <input type="text" name="" placeholder="Enter SKU" id="manual-sku-code"><button id="manual-entry" style="margin-bottom: 4px;margin-left: 4px;" class="btn btn-primary btn-sm">Manual Entry</button>
+  </div>
   <form id="order-form" action="/products/create_order" method="get">
     <table class="table">
       <thead>
@@ -28,6 +32,64 @@
 </div>
 
 <script type="text/javascript">
+
+  $("#manual-entry").click(function(){
+    $.ajax({
+      type: "POST",
+      url: '/products/get_barcode_from_sku',
+      data: { barcode:  $("#manual-sku-code").val()},
+      success: function(res){
+        if(res.status == 200){
+          var product_db_id
+          var inventory_qty;
+          var actual_qty;
+          var inventory_qty;
+          var row_exist = false;
+          var rows_subtotal = 0.0;
+          $('#scanned-item-body tr').each(function(){
+            product_db_id = $(this).find("#product_db_id");
+            if(product_db_id.length > 0){
+              if(parseInt(product_db_id.val()) == parseInt(res.data['id'])){
+                row_exist = true;
+                inventory_qty = $(this).find("#inventory-qty");
+                actual_qty = $(this).find("#actual_qty");
+                if(parseInt(inventory_qty.val()) + 1 > parseInt(actual_qty.val())){
+                  alert("Inventory max limit reach");
+                }else{
+                  inventory_qty.val(parseInt(inventory_qty.val()) + 1)
+                  var total = parseFloat(inventory_qty.val()) * parseFloat(res.data['price'])
+                  $(this).find("#subtotal").text(total.toFixed(2));
+                  $(this).find("#subtotal-input").val(total.toFixed(2));
+                }
+               return false;
+              }
+            }
+          });
+
+          if(!row_exist && parseInt(res.data['inventory']) > 0){
+            row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control" readonly="" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
+              $('#scanned-item-body').append(row);
+          }
+
+          if(parseInt(res.data['inventory']) == 0){
+            alert("You dont have enough inventory for this item");
+          }
+
+          $("#rows_subtotal").show();
+          $('#scanned-item-body tr').each(function(){
+            rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+          });
+
+          $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+          $("#start-scanning").hide();
+        }
+        else{
+          alert("Item not found");
+        }
+      }
+    });
+  });
+
   $("#rows_subtotal").hide();
   $('body').on('keyup', '#inventory-qty', function(){
     var row = $(this).parent().parent();
@@ -129,7 +191,9 @@
 
                   $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
                   $("#start-scanning").hide();
-                  load_quagga();
+                  setTimeout(function(){
+                    load_quagga();
+                  }, 1000);
                 }
                 else{
                   alert("There was an error while scanning please refresh scanner by pressing refresh scanner button");

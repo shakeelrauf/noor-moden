@@ -113,6 +113,15 @@ class ProductsController < ApplicationController
     end
   end
 
+  def get_barcode_from_sku
+    @product = Product.where(model_number: params[:barcode]).first
+    if @product.present?
+      render json: { data: @product.as_json, status: 200 }
+    else
+      render json: { data: [], status: 404 }
+    end
+  end
+
   def create_order
     db_ids = params[:product_db_id]
     new_qtys = params[:new_qty]

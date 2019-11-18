@@ -14,6 +14,7 @@ class OrdersController < ApplicationController
   # GET /orders/1
   # GET /orders/1.json
   def show
+    @lineitems = @order.lineitems
   end
 
   # GET /orders/new
@@ -23,6 +24,22 @@ class OrdersController < ApplicationController
 
   # GET /orders/1/edit
   def edit
+  end
+
+  def cancel_order
+    order = Order.find(params[:id])
+    order.lineitems.each do |item|
+      product = Product.find(item.product_id)
+      qty = product.inventory.to_i + item.order_qty
+      if product.variant_id.present?
+        result = update_inventory(product.variant_id, qty)
+      end
+      product.inventory = qty
+      product.save
+    end
+    order.status = "Canceled"
+    order.save
+    redirect_to orders_path, notice: "Order Updated successfully"
   end
 
   # POST /orders
@@ -74,5 +91,16 @@ class OrdersController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def order_params
       params.require(:order).permit(:variant_id, :product_id, :order_qty, :remain_qty, :total)
+    end
+
+    def update_inventory(variant_id, qty)
+      @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2019-07/variants/#{variant_id}.json",
+        :body => {
+                  "variant": {:id=> variant_id,
+                    :inventory_quantity=> qty,
+                  }
+               },
+        :headers => {
+          'X-Shopify-Access-Token' => ENV['Access_Token']})
     end
 end

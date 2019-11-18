@@ -10,10 +10,25 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2019_11_01_082540) do
+ActiveRecord::Schema.define(version: 2019_11_18_095028) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
+
+  create_table "lineitems", force: :cascade do |t|
+    t.bigint "order_id"
+    t.bigint "shopify_product_id"
+    t.bigint "variant_id"
+    t.integer "order_qty"
+    t.integer "remain_qty"
+    t.decimal "total", precision: 8, scale: 2
+    t.decimal "price", precision: 8, scale: 2
+    t.integer "product_id"
+    t.string "sku"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+    t.index ["order_id"], name: "index_lineitems_on_order_id"
+  end
 
   create_table "orders", force: :cascade do |t|
     t.bigint "variant_id"
@@ -23,6 +38,7 @@ ActiveRecord::Schema.define(version: 2019_11_01_082540) do
     t.decimal "total", precision: 8, scale: 2
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.string "status", default: "Processed"
   end
 
   create_table "products", force: :cascade do |t|
@@ -57,4 +73,5 @@ ActiveRecord::Schema.define(version: 2019_11_01_082540) do
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
   end
 
+  add_foreign_key "lineitems", "orders"
 end

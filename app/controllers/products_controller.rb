@@ -127,25 +127,36 @@ class ProductsController < ApplicationController
     new_qtys = params[:new_qty]
     totals = params[:subtotal]
     actual_qtys = params[:actual_qty]
+    order_sum = totals.collect { |total| total.to_f }.sum
+    qty_sum = new_qtys.collect { |qty| qty.to_i }.sum
+    order = Order.create(total: order_sum, order_qty: qty_sum)
     db_ids.zip(new_qtys, totals, actual_qtys).each do |id, new_qty, total, actual_qty|
       qty = actual_qty.to_i - new_qty.to_i
       product = Product.find(id)
       if product.variant_id.present?
         result = update_inventory(product.variant_id, qty)
-        Order.create(
+        Lineitem.create(
           variant_id: product.variant_id,
-          product_id: product.shopify_product_id,
+          shopify_product_id: product.shopify_product_id,
+          product_id: product.id,
           order_qty: new_qty,
           remain_qty: qty,
-          total: total
+          total: total,
+          order_id: order.id,
+          sku: product.model_number,
+          price: product.price
         )
       else
         product.inventory = qty
         product.save
-        Order.create(
+        Lineitem.create(
+          product_id: product.id,
           order_qty: new_qty,
           remain_qty: qty,
-          total: total
+          total: total,
+          order_id: order.id,
+          sku: product.model_number,
+          price: product.price
         )
       end
     end

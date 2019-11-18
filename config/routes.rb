@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :lineitems
   resources :orders
   devise_for :users
   resources :products do
@@ -17,5 +18,6 @@ Rails.application.routes.draw do
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 
   get '/get_hook' => 'webhook#get_hook'
+  get '/cancel_order' => 'orders#cancel_order'
 
 end

@@ -1,0 +1,76 @@
+<div class="col-8">
+  <%= form_with(model: lineitem, local: true) do |form| %>
+    <% if lineitem.errors.any? %>
+      <div id="error_explanation">
+        <h2><%= pluralize(lineitem.errors.count, "error") %> prohibited this lineitem from being saved:</h2>
+
+        <ul>
+        <% lineitem.errors.full_messages.each do |message| %>
+          <li><%= message %></li>
+        <% end %>
+        </ul>
+      </div>
+    <% end %>
+
+    <div class="form-group">
+      <input type="text" name="product_price" id="product_price" value="<%= @product.price %>" hidden>
+      <%#= form.label :order_id %>
+      <%= form.hidden_field :order_id, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%#= form.label :product_id %>
+      <%= form.hidden_field :product_id, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :shopify_product_id, "Shopify Product Id" %>
+      <%= form.number_field :shopify_product_id, class: 'form-control', readonly: true %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :variant_id %>
+      <%= form.number_field :variant_id, class: 'form-control', readonly: true %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :order_qty %>
+      <%= form.number_field :order_qty, class: 'form-control', max: @product.inventory %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :remain_qty %>
+      <%= form.number_field :remain_qty, class: 'form-control' %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :total %>
+      <%= form.text_field :total, class: 'form-control', readonly: true %>
+    </div>
+
+    <div class="form-group">
+      <%= form.label :sku %>
+      <%= form.text_field :sku, class: 'form-control', readonly: true %>
+    </div>
+
+    <div class="actions">
+      <%= form.submit class: 'btn btn-primary' %>
+    </div>
+  <% end %>
+</div>
+
+<script type="text/javascript">
+  $("#lineitem_order_qty").keyup(function(){
+    var max_val = parseInt($(this).attr("max"));
+    var curr_val = parseInt($(this).val());
+    var curr_price = parseFloat($("#product_price").val())
+    if(curr_val > max_val){
+      alert("Inventory max limit reach");
+      $(this).val(max_val);
+      $("#lineitem_total").val((curr_price * max_val).toFixed(2));
+    }
+    else{
+      $("#lineitem_total").val((curr_price * curr_val).toFixed(2));
+    }
+  });
+</script>

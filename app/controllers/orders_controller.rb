@@ -42,6 +42,13 @@ class OrdersController < ApplicationController
     redirect_to orders_path, notice: "Order Updated successfully"
   end
 
+  def print_order
+    @order = Order.find(params[:id])
+    @lineitems = @order.lineitems
+    pdf = render_to_string pdf: "new_pdf", template: "orders/download_order.html.erb", encoding: "UTF-8",layout: false, locals: { :@order => @order, :@lineitems => @lineitems }
+    send_data pdf, filename: "order-num-#{@order.id}-invoice.pdf"
+  end
+
   # POST /orders
   # POST /orders.json
   def create

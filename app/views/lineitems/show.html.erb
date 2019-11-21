@@ -1,39 +1,15 @@
-<p id="notice"><%= notice %></p>
+<div class="container">
+  <p id="notice"><%= notice %></p>
+  <table class="table table-striped">
+    <tr><td>Order Num:</td><td><%= @lineitem.order.id %></td></tr>
+    <tr><td>Shopify Product:</td><td><%= @lineitem.shopify_product_id %></td></tr>
+    <tr><td>Variant Id:</td><td><%= @lineitem.variant_id %></td></tr>
+    <tr><td>Order qty:</td><td><%= @lineitem.order_qty %></td></tr>
+    <tr><td>Remain qty:</td><td><%= @lineitem.remain_qty %></td></tr>
+    <tr><td>Total:</td><td><%= @lineitem.total %></td></tr>
+    <tr><td>Sku:</td><td><%= @lineitem.sku %></td></tr>
+  </table>
 
-<p>
-  <strong>Order:</strong>
-  <%= @lineitem.order %>
-</p>
-
-<p>
-  <strong>Product:</strong>
-  <%= @lineitem.product_id %>
-</p>
-
-<p>
-  <strong>Variant:</strong>
-  <%= @lineitem.variant_id %>
-</p>
-
-<p>
-  <strong>Order qty:</strong>
-  <%= @lineitem.order_qty %>
-</p>
-
-<p>
-  <strong>Remain qty:</strong>
-  <%= @lineitem.remain_qty %>
-</p>
-
-<p>
-  <strong>Total:</strong>
-  <%= @lineitem.total %>
-</p>
-
-<p>
-  <strong>Sku:</strong>
-  <%= @lineitem.sku %>
-</p>
-
-<%= link_to 'Edit', edit_lineitem_path(@lineitem) %> |
-<%= link_to 'Back', lineitems_path %>
+  <%= link_to 'Edit', edit_lineitem_path(@lineitem) %> |
+  <%= link_to 'Back', lineitems_path %>
+</div>

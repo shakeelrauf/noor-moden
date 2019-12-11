@@ -2,8 +2,23 @@
   <title>ShopifyWebhooks</title>
   <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
 </head>
+<header>
+  <div class="logo-div">
+    <img src="https://cdn.shopify.com/s/files/1/0253/5895/8626/files/Asset_2_3x_8a6bfbce-2f59-47d3-a992-223d7df03be3.png?5572" alt="logo" style="width:200px;">
+  </div>
+  <div class="address-invoice">
+    Noor Moden GmBh & co. KG
+    <br/>
+    Breslauer Str. 8 41460 Neuss
+    <br/>
+    Tel. 02131.202527 Fax. 02131.202529
+    <br/>
+    E-Mail: info@noor-moden.com
+    <br/>
+    http://www.noor-moden.com 
+  </div>
+</header>
 <div class="container">
-
   <p id="notice"><%= notice %></p>
 
   <h1>Invoice For Order #<%= @order.id %></h1>
@@ -59,6 +74,10 @@
     </tbody>
   </table>
 </div>
+<footer>
+  <div class="footer-invoice-text">Reklamationen richten Sie bitte nur schriftlich mit einer Rechnungskopie und unverzuglich an unsere Firma. Refullungsort und Gerichtsstand ist Neuss. Die Ware bleibt bis zur restlosen Bezahlung unser Eigentum. </div>
+</footer>
+
 <style type="text/css">
   .no-visible{
     visibility: hidden;
@@ -67,4 +86,53 @@
     border-bottom: none !important;
     border-top: none !important;
   }
+
+
+header {
+  width: 100%;
+  height: 150px;
+  background: #222;
+}
+
+a {
+  text-decoration: none;
+}
+
+
+.logo-div {
+  float: left;
+  line-height: 75px;
+  color: #FFF;
+  margin-left: 20px;
+  margin-top: 15px;
+}
+
+.address-invoice {
+  width: 25%;
+  height: 40px;
+  float: right;
+  margin-right: 20px;
+  color: #FFF;
+  line-height: 24px;
+  font-size: 12px;
+  margin-top: 15px;
+}
+
+footer {
+  width: 100%;
+  height: 100px;
+  background: #222;
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  }
+
+.footer-invoice-text {
+  color: white;
+  padding-top: 28px;
+  padding-left: 50px;
+  padding-right: 50px;
+  text-align: center;
+}
+
 </style>

@@ -1,4 +1,4 @@
-<header>
+<!-- <header>
   <div class="logo-div">
     <img src="https://cdn.shopify.com/s/files/1/0253/5895/8626/files/Asset_2_3x_8a6bfbce-2f59-47d3-a992-223d7df03be3.png?5572" alt="logo" style="width:200px;">
   </div>
@@ -13,82 +13,67 @@
     <br/>
     http://www.noor-moden.com 
   </div>
-</header>
+</header> -->
 
 <div class="container">
 
   <p id="notice"><%= notice %></p>
 
-  <h1>Lineitems</h1>
   <a href="/print_order?id=<%=params[:id] %>" class="btn btn-primary">Print Order</a>
   <br/>
   <br/>
-  <table class="table table-striped">
+
+<div class="invoice_no">
+<div style="float: left;font-size: 20px;">Lieferschein No: <%= @order.id %></div>
+<div style="float: right;font-size: 20px;">Lieferdatum: <%= @order.created_at.to_date %></div>
+<p style="clear: both;font-weight: 700;">Bitte kontrollieren Sie die berechnete Menge sofort. Spatere Mengenreklamation konnen nicht anerkannt werden.</p>
+</div>
+
+<table class="table table-bordered">
     <thead>
       <tr>
-        <th>Order</th>
-        <th>Shopify Product Id</th>
-        <th>Variant Id</th>
-        <th>Order qty</th>
-        <th>Remain qty</th>
-        <th>Sku</th>
-        <th>Total</th>
-        <th colspan="3"></th>
+        <th style="text-align: center;">Pos</th>
+        <th style="text-align: center;" colspan="2">Menge</th>
+        <th style="text-align: center;">SKU</th>
+        <th style="text-align: center;">Einzelpries EUR</th>
+        <th style="text-align: center;">Gesamtreis EUR</th>
       </tr>
     </thead>
-
     <tbody>
-      <% @lineitems.each do |lineitem| %>
+      <% @lineitems.each_with_index do |lineitem, index| %>
         <tr>
-          <td><%= lineitem.order.id %></td>
-          <td><%= lineitem.shopify_product_id %></td>
-          <td><%= lineitem.variant_id %></td>
-          <td><%= lineitem.order_qty %></td>
-          <td><%= lineitem.remain_qty %></td>
-          <td><%= lineitem.sku %></td>
-          <td><%= lineitem.total %></td>
-          <!-- <td><%#= link_to 'Show', lineitem %></td> -->
-          <td><%= link_to 'Edit', edit_lineitem_path(lineitem) %></td>
-          <td><%= link_to 'Destroy', lineitem, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+          <td style="text-align: right;"><%= index + 1 %></td>
+          <td style="text-align: right;"><%= lineitem.order_qty %></td>
+          <td style="text-align: right;"></td>
+          <td style="text-align: right;"><%= lineitem.sku %></td>
+          <td style="text-align: right;"><%= lineitem.price %></td>
+          <td style="text-align: right;"><%= lineitem.total %></td>
         </tr>
       <% end %>
-    </tbody>
-  </table>
-  <table class="table">
-    <thead>
       <tr>
-        <th class="no-visible">Order</th>
-        <th class="no-visible">Shopify Product Id</th>
-        <th class="no-visible">Variant Id</th>
-        <th class="no-visible">Order qty</th>
-        <th class="no-visible">Remain qty</th>
-        <th class="no-visible">Sku</th>
-        <th class="no-border">Sub Total: <%= line_item_subtotal(@lineitems) %></th>
-        <th class="no-visible">edit</th>
-        <th class="no-visible">destroy</th>
+        <td colspan="5" style="">Gesamt Netto</td>
+        <td style="text-align: right;"><%= line_item_subtotal(@lineitems) %></td>
       </tr>
-    </thead>
-    <tbody class="no-visible">
       <tr>
-        <td>Order</td>
-        <td>4342401368098</td>
-        <td>31162877476898</td>
-        <td>30</td>
-        <td>13</td>
-        <td>16581503</td>
-        <td>Total</td>
-        <td>Edit</td>
-        <td>Destroy</td>
+        <td colspan="5" style="text-align: right;">Zuzuglich 19% MuSt. <%=line_item_subtotal(@lineitems) %></td>
+        <td></td>
       </tr>
+      <tr>
+        <td colspan="5" style="">Gesamtbetrag</td>
+        <td style="text-align: right;"><%=line_item_subtotal(@lineitems) %></td>
+      </tr>
+    
     </tbody>
-  </table>
+</table>
+
+  <p>Reklamationen richten Sie bitte nur schriftlich mit einer Rechnungskopie und unverzuglich an unsere Firma. Erfullungsort und Gerichtsstand ist Neuss. Die Ware bleibt bis zur restlosen Bezahlung unser Eigentum</p>
 
   <%#= link_to 'Edit', edit_order_path(@order) %> 
   <%= link_to 'Back', orders_path %>
 </div>
-<footer>
+<!-- <footer>
   <div class="footer-invoice-text">Reklamationen richten Sie bitte nur schriftlich mit einer Rechnungskopie und unverzuglich an unsere Firma. Refullungsort und Gerichtsstand ist Neuss. Die Ware bleibt bis zur restlosen Bezahlung unser Eigentum. </div>
-</footer>
+</footer> -->
 <style type="text/css">
   .no-visible{
     visibility: hidden;

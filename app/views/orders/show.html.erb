@@ -26,7 +26,7 @@
 <div class="invoice_no">
 <div style="float: left;font-size: 20px;">Lieferschein No: <%= @order.id %></div>
 <div style="float: right;font-size: 20px;">Lieferdatum: <%= @order.created_at.to_date %></div>
-<p style="clear: both;font-weight: 700;">Bitte kontrollieren Sie die berechnete Menge sofort. Spatere Mengenreklamation konnen nicht anerkannt werden.</p>
+<p style="clear: both;font-weight: 700;">Bitte kontrollieren Sie die berechnete Menge sofort. Spätere Mengenreklamationen können nicht anerkannt werden.</p>
 </div>
 
 <table class="table table-bordered">
@@ -35,8 +35,8 @@
         <th style="text-align: center;">Pos</th>
         <th style="text-align: center;" colspan="2">Menge</th>
         <th style="text-align: center;">SKU</th>
-        <th style="text-align: center;">Einzelpries EUR</th>
-        <th style="text-align: center;">Gesamtreis EUR</th>
+        <th style="text-align: center;">Einzelpreis EUR</th>
+        <th style="text-align: center;">Gesamtpreis EUR</th>
       </tr>
     </thead>
     <tbody>
@@ -47,20 +47,25 @@
           <td style="text-align: right;"></td>
           <td style="text-align: right;"><%= lineitem.sku %></td>
           <td style="text-align: right;"><%= lineitem.price %></td>
-          <td style="text-align: right;"><%= lineitem.total %></td>
+          <td style="text-align: right;"><%= lineitem.price * lineitem.order_qty %></td>
         </tr>
       <% end %>
+      <tr>
+        <td>Gesamt Menge</td>
+        <td style="text-align: right;"><b><%= @lineitems.collect {|qty| qty.order_qty}.sum %></b></td>
+        <td colspan="5" style=""></td>
+      </tr>
       <tr>
         <td colspan="5" style="">Gesamt Netto</td>
         <td style="text-align: right;"><%= line_item_subtotal(@lineitems) %></td>
       </tr>
       <tr>
-        <td colspan="5" style="text-align: right;">Zuzuglich 19% MuSt. <%=line_item_subtotal(@lineitems) %></td>
-        <td></td>
+        <td colspan="5" style="text-align: right;">Zuzüglich 19% MwSt.</td>
+        <td style="text-align: right;"><%= (line_item_subtotal(@lineitems) / 100 * 19).round(3) %></td>
       </tr>
       <tr>
         <td colspan="5" style="">Gesamtbetrag</td>
-        <td style="text-align: right;"><%=line_item_subtotal(@lineitems) %></td>
+        <td style="text-align: right;"><%= ((line_item_subtotal(@lineitems) / 100 * 19).round(2) + line_item_subtotal(@lineitems)).round(2) %></td>
       </tr>
     
     </tbody>

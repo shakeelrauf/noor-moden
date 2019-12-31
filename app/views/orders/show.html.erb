@@ -25,7 +25,7 @@
 
 <div class="invoice_no">
 <div style="float: left;font-size: 20px;">Lieferschein No: <%= @order.id %></div>
-<div style="float: right;font-size: 20px;">Lieferdatum: <%= @order.created_at.to_date %></div>
+<div style="float: right;font-size: 20px;">Lieferdatum: <%= @order.created_at.strftime("%m/%d/%Y") %></div>
 <p style="clear: both;font-weight: 700;">Bitte kontrollieren Sie die berechnete Menge sofort. Spätere Mengenreklamationen können nicht anerkannt werden.</p>
 </div>
 
@@ -57,21 +57,19 @@
       </tr>
       <tr>
         <td colspan="5" style="">Gesamt Netto</td>
-        <td style="text-align: right;"><%= line_item_subtotal(@lineitems) %></td>
+        <td style="text-align: right;"><%= net_total(@lineitems) %></td>
       </tr>
       <tr>
         <td colspan="5" style="text-align: right;">Zuzüglich 19% MwSt.</td>
-        <td style="text-align: right;"><%= (line_item_subtotal(@lineitems) / 100 * 19).round(3) %></td>
+        <td style="text-align: right;"><%= net_total_tax(@lineitems) %></td>
       </tr>
       <tr>
         <td colspan="5" style="">Gesamtbetrag</td>
-        <td style="text-align: right;"><%= ((line_item_subtotal(@lineitems) / 100 * 19).round(2) + line_item_subtotal(@lineitems)).round(2) %></td>
+        <td style="text-align: right;"><%= net_total_after_tax(@lineitems) %></td>
       </tr>
     
     </tbody>
 </table>
-
-  <p>Reklamationen richten Sie bitte nur schriftlich mit einer Rechnungskopie und unverzuglich an unsere Firma. Erfullungsort und Gerichtsstand ist Neuss. Die Ware bleibt bis zur restlosen Bezahlung unser Eigentum</p>
 
   <%#= link_to 'Edit', edit_order_path(@order) %> 
   <%= link_to 'Back', orders_path %>

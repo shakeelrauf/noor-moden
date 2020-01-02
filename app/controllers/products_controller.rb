@@ -69,6 +69,20 @@ class ProductsController < ApplicationController
     end
   end
 
+  def export
+    # Product.all.export
+    ProductsImportExportJob.perform_later('export');
+  end
+
+  def import
+    # Product.import(params[:file].path)
+    spreadsheet = Spreadsheet.new(file_type: 'import')
+    spreadsheet.file.attach(params[:file])
+    spreadsheet.save
+    ProductsImportExportJob.perform_later('import', spreadsheet.id);
+    redirect_to products_path, notice: "Products imported."
+  end
+
   def update_shopify_product
     in_house_variants = Product.where(shopify_product_id: params[:id]).collect { |c| c.variant_id }
     shopify_variant_ids = params[:variants].collect { |c| c["id"] }

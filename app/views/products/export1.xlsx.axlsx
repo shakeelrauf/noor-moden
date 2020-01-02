@@ -1,0 +1,23 @@
+wb = xlsx_package.workbook
+
+wb.add_worksheet(name: "Products") do |sheet|
+  # this is the head row of your spreadsheet
+  sheet.add_row %w(SKU Model Color Size Quantity Price Status)
+  
+  # each product is a row on your spreadsheet
+  @products.each do |product|
+    model_number = product.model_number
+    if model_number.include? ('/')
+        length = model_number.length
+        size = model_number[length-2..length-1]
+        color = model_number[length-7..length-3]
+        model = model_number[0..length-8]
+    else
+        length = model_number.length
+        size = model_number[length-2..length-1]
+        color = model_number[length-4..length-3]
+        model = model_number[0..length-5]
+    end
+    sheet.add_row [model_number, model, color, size, product.inventory, product.price, 'ON']    
+  end
+end

@@ -11,4 +11,16 @@ class CustomerMailer < ApplicationMailer
     @email = params[:email]
     mail to: "talha.waseem@phaedrasolutions.com", subject: "New Customer Signup on your store"
   end
+
+  def products_exported(file)
+    @greeting = "Hi"
+    attachments['Products.xlsx'] = file
+    mail to: "talha.waseem@phaedrasolutions.com", subject: "Products Exported"
+  end
+
+  def products_imported(file_path)
+    @greeting = "Hi"
+    attachments['Products.xlsx'] = File.read(file_path, :encoding => 'BINARY')
+    mail to: "talha.waseem@phaedrasolutions.com", subject: "Products Exported"
+  end
 end

@@ -76,3 +76,13 @@ end
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 gem 'dotenv-rails', group: [:test, :development, :production]
+
+# Export data to excel sheet
+gem 'rubyzip'
+gem 'axlsx'
+gem 'axlsx_rails'
+
+# Import data from excel sheet
+gem 'roo'
+
+gem 'delayed_job_active_record'

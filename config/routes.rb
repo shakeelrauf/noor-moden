@@ -7,6 +7,8 @@ Rails.application.routes.draw do
     post :get_barcode_from_sku, on: :collection
     get :create_order, on: :collection
     get :start_scanning, on: :collection
+    get :export, on: :collection
+    post :import, on: :collection
   end
   root :to => 'products#index'
   mount ShopifyApp::Engine, at: '/'

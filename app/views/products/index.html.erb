@@ -3,7 +3,12 @@
 
   <h1>Products</h1>
   <%= link_to 'New Product', new_product_path, class: "btn btn-primary", style: 'float: right;margin-bottom: 10px;' %>
+  <%= link_to 'Export Products', export_products_path, remote: true, class: "btn btn-primary", style: 'float: right;margin-bottom: 10px;margin-right: 2px;' %>
 
+  <%= form_tag import_products_path, multipart: true do %>
+    <%= file_field_tag :file %>
+    <%= submit_tag "Import" %>
+  <% end %>
   <form action="/products">
     <div class="form-group">
       <input type="text" name="query" value="<%= params[:query] %>" class='form-control col-6' placeholder="Search using product or variant id">

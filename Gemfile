@@ -87,3 +87,5 @@ gem 'axlsx_rails'
 gem 'roo'
 
 gem 'delayed_job_active_record'
+gem 'daemons'
+

@@ -1,10 +1,15 @@
 class Product < ApplicationRecord
+
   require 'roo'
   include PgSearch::Model
   pg_search_scope :search_by_shopify_ids, against: [:variant_id, :shopify_product_id, :inventory, :model_number],using: {
                     tsearch: { prefix: true }
                   }
 
+  require 'barby/barcode/code_128'
+  require 'barby/outputter/ascii_outputter'
+  require 'barby/outputter/png_outputter'
+  require 'barby/outputter/svg_outputter'
 
   def self.to_csv
     attributes = ['SKU', 'Model', 'Color', 'Size', 'Quantity', 'Price', 'Status']
@@ -63,10 +68,15 @@ class Product < ApplicationRecord
       product = Product.find_by(model_number: model_number)
       if product.present? && row_data[6].downcase == 'on'
         product.update(inventory: row_data[4].to_i, price: row_data[5].to_f)
-      elsif row_data[6].downcase == 'off'
+        update_variant_price(product.variant_id, product.inventory, product.price)
+      elsif product.present? && row_data[6].downcase == 'off'
         product.delete
       else
         new_product = Product.new(model_number: model_number, inventory: row_data[4].to_i, price: row_data[5].to_f)
+        code = "000-" + new_product.id.to_s
+        barcode = Barby::Code128.new(code).to_svg(margin: 0)
+        barcode = barcode.sub!('<svg ', '<svg preserveAspectRatio="none" ')
+        new_product.barcode = barcode
         new_product.save!
       end
     end
@@ -80,4 +90,17 @@ class Product < ApplicationRecord
     else raise "Unknown file type: #{file.original_filename}"
     end
   end
+
+  def update_variant_price(variant_id, qty, price)
+    @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2019-07/variants/#{variant_id}.json",
+      :body => { 
+                "variant": {:id=> variant_id, 
+                  :inventory_quantity=> qty,
+                  :price => price
+                }
+             },
+      :headers => {
+        'X-Shopify-Access-Token' => ENV['Access_Token']})
+    end
+
 end

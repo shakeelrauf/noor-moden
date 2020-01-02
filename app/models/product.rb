@@ -36,18 +36,20 @@ class Product < ApplicationRecord
         sheet.add_row %w(SKU Model Color Size Quantity Price Status)
         all.each do |product|
           model_number = product.model_number
-          if model_number.include? ('/')
-              length = model_number.length
-              size = model_number[length-2..length-1]
-              color = model_number[length-7..length-3]
-              model = model_number[0..length-8]
-          else
-              length = model_number.length
-              size = model_number[length-2..length-1]
-              color = model_number[length-4..length-3]
-              model = model_number[0..length-5]
-          end
-          sheet.add_row [model_number, model, color, size, product.inventory, product.price, 'ON']    
+          if model_number.present? 
+            if model_number.include? ('/')
+                length = model_number.length
+                size = model_number[length-2..length-1]
+                color = model_number[length-7..length-3]
+                model = model_number[0..length-8]
+            else
+                length = model_number.length
+                size = model_number[length-2..length-1]
+                color = model_number[length-4..length-3]
+                model = model_number[0..length-5]
+            end
+            sheet.add_row [model_number, model, color, size, product.inventory, product.price, 'ON']
+          end    
         end 
       end
     end
@@ -65,14 +67,15 @@ class Product < ApplicationRecord
     (2..spreadsheet.last_row).each do |i|
       row_data = spreadsheet.row(i)
       model_number = row_data[0].to_s.sub(/\.?0+$/, '')
+      price = row_data[5].split(' ')[0].to_f
       product = Product.find_by(model_number: model_number)
       if product.present? && row_data[6].downcase == 'on'
-        product.update(inventory: row_data[4].to_i, price: row_data[5].to_f)
-        update_variant_price(product.variant_id, product.inventory, product.price)
+        product.update(inventory: row_data[4].to_i, price: price)
+        # update_variant_price(product.variant_id, product.inventory, product.price)
       elsif product.present? && row_data[6].downcase == 'off'
         product.delete
-      else
-        new_product = Product.new(model_number: model_number, inventory: row_data[4].to_i, price: row_data[5].to_f)
+      elsif !product.present? && row_data[6].downcase == 'on'
+        new_product = Product.new(model_number: model_number, inventory: row_data[4].to_i, price: price)
         code = "000-" + new_product.id.to_s
         barcode = Barby::Code128.new(code).to_svg(margin: 0)
         barcode = barcode.sub!('<svg ', '<svg preserveAspectRatio="none" ')

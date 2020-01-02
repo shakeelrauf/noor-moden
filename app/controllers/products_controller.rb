@@ -72,6 +72,7 @@ class ProductsController < ApplicationController
   def export
     # Product.all.export
     ProductsImportExportJob.perform_later('export');
+    redirect_to products_path, notice: "Exporting Products..."
   end
 
   def import
@@ -80,7 +81,7 @@ class ProductsController < ApplicationController
     spreadsheet.file.attach(params[:file])
     spreadsheet.save
     ProductsImportExportJob.perform_later('import', spreadsheet.id);
-    redirect_to products_path, notice: "Products imported."
+    redirect_to products_path, notice: "Importing Products..."
   end
 
   def update_shopify_product

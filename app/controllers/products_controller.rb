@@ -75,7 +75,7 @@ class ProductsController < ApplicationController
   end
 
   def import
-    # Product.import(params[:file].path)
+    # Product.import(params[:file].path, 5)
     spreadsheet = Spreadsheet.new(file_type: 'import')
     spreadsheet.file.attach(params[:file])
     spreadsheet.save

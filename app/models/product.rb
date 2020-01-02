@@ -59,13 +59,14 @@ class Product < ApplicationRecord
     header = spreadsheet.row(1)
     (2..spreadsheet.last_row).each do |i|
       row_data = spreadsheet.row(i)
-      product = Product.find_by(model_number: row_data[0].to_i)
+      model_number = row_data[0].to_s.sub(/\.?0+$/, '')
+      product = Product.find_by(model_number: model_number)
       if product.present? && row_data[6].downcase == 'on'
-        product.update(inventory: row_data[4].to_i, price: row_data[5].to_i)
+        product.update(inventory: row_data[4].to_i, price: row_data[5].to_f)
       elsif row_data[6].downcase == 'off'
         product.delete
       else
-        new_product = Product.new(model_number: row_data[0], inventory: row_data[4].to_i, price: row_data[5].to_i)
+        new_product = Product.new(model_number: model_number, inventory: row_data[4].to_i, price: row_data[5].to_f)
         new_product.save!
       end
     end

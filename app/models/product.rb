@@ -67,7 +67,7 @@ class Product < ApplicationRecord
     (2..spreadsheet.last_row).each do |i|
       row_data = spreadsheet.row(i)
       model_number = row_data[0].to_s.sub(/\.?0+$/, '')
-      price = row_data[5].split(' ')[0].to_f
+      price = row_data[5].to_s.split(' ')[0].to_f
       product = Product.find_by(model_number: model_number)
       if product.present? && row_data[6].downcase == 'on'
         product.update(inventory: row_data[4].to_i, price: price)

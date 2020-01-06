@@ -48,7 +48,7 @@ class Product < ApplicationRecord
                 color = model_number[length-4..length-3]
                 model = model_number[0..length-5]
             end
-            sheet.add_row [model_number, model, color, size, product.inventory, product.price, 'ON']
+            sheet.add_row [model_number, model, color, size, product.inventory, product.price, 'ON'], types: [:string, :string, :string, :string, :string, :float, :string]
           end    
         end 
       end

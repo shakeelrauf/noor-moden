@@ -25,7 +25,7 @@
 
 <div class="invoice_no">
 <div style="float: left;font-size: 20px;">Lieferschein No: <%= @order.id %></div>
-<div style="float: right;font-size: 20px;">Lieferdatum: <%= @order.created_at.strftime("%m/%d/%Y") %></div>
+<div style="float: right;font-size: 20px;">Lieferdatum: <%= @order.created_at.strftime("%d/%m/%Y") %></div>
 <p style="clear: both;font-weight: 700;">Bitte kontrollieren Sie die berechnete Menge sofort. Spätere Mengenreklamationen können nicht anerkannt werden.</p>
 </div>
 
@@ -56,17 +56,17 @@
         <td colspan="5" style=""></td>
       </tr>
       <tr>
-        <td colspan="5" style="">Gesamt Netto</td>
+        <td colspan="5" style="">Gesamt Netto (Ohne Mehrwertsteuer)</td>
         <td style="text-align: right;"><%= net_total(@lineitems) %></td>
       </tr>
-      <tr>
+<!--       <tr>
         <td colspan="5" style="text-align: right;">Zuzüglich 19% MwSt.</td>
         <td style="text-align: right;"><%= net_total_tax(@lineitems) %></td>
       </tr>
       <tr>
         <td colspan="5" style="">Gesamtbetrag</td>
         <td style="text-align: right;"><%= net_total_after_tax(@lineitems) %></td>
-      </tr>
+      </tr> -->
     
     </tbody>
 </table>

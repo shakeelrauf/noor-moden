@@ -31,20 +31,20 @@
           <td><%= order.status %></td>
           <td><%= order.created_at.strftime('%Y-%m-%d, %I:%M:%S:%p') %></td>
           <td><%#= link_to 'Edit', edit_order_path(order) %></td>
-          <% if current_user.role == "admin" %>
             <td>
               <%= link_to 'Detail', order %>
             </td>
-            <td>
-              <%= link_to 'Delete', order, method: :delete, data: { confirm: 'Are you sure?' } %>
-            </td>
+            <% if current_user.role == "admin" %>
+              <td>
+                <%= link_to 'Delete', order, method: :delete, data: { confirm: 'Are you sure?' } %>
+              </td>
+            <% end %>
               <% if order.status === 'Processed' %>
                 <td>
                   <%= link_to 'Cancel', cancel_order_path(id: order.id), data: { confirm: 'Are you sure?' } %>
                 </td>
               <% end %>
             </td>
-          <% end %>
         </tr>
       <% end %>
     </tbody>

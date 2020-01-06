@@ -1,7 +1,7 @@
 Rails.application.routes.draw do
   resources :lineitems
   resources :orders
-  devise_for :users
+  devise_for :users, skip: [:registrations]
   resources :products do
     post :get_barcode, on: :collection
     post :get_barcode_from_sku, on: :collection

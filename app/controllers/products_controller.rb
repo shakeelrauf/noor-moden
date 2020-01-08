@@ -14,9 +14,9 @@ class ProductsController < ApplicationController
     if params[:query].present?
       @products = Product.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
     else
-      if params[:sort_by] == 'modelAsc'
+      if params[:sort_by] == 'skuAsc'
         @products = Product.order('model_number').paginate(page: params[:page], per_page: 10)
-      elsif params[:sort_by] == 'modelDsc'
+      elsif params[:sort_by] == 'skuDesc'
         @products = Product.order('model_number DESC').paginate(page: params[:page], per_page: 10)
       elsif params[:sort_by] == 'dateAsc'
         @products = Product.order('updated_at').paginate(page: params[:page], per_page: 10)
@@ -147,11 +147,12 @@ class ProductsController < ApplicationController
     db_ids = params[:product_db_id]
     new_qtys = params[:new_qty]
     totals = params[:subtotal]
+    labels = params[:label]
     actual_qtys = params[:actual_qty]
     order_sum = totals.collect { |total| total.to_f }.sum
     qty_sum = new_qtys.collect { |qty| qty.to_i }.sum
     order = Order.create(total: order_sum, order_qty: qty_sum)
-    db_ids.zip(new_qtys, totals, actual_qtys).each do |id, new_qty, total, actual_qty|
+    db_ids.zip(new_qtys, totals, actual_qtys, labels).each do |id, new_qty, total, actual_qty, label|
       qty = actual_qty.to_i - new_qty.to_i
       product = Product.find(id)
       if product.variant_id.present?
@@ -165,7 +166,8 @@ class ProductsController < ApplicationController
           total: total,
           order_id: order.id,
           sku: product.model_number,
-          price: product.price
+          price: product.price,
+          label: label
         )
       else
         product.inventory = qty
@@ -177,7 +179,8 @@ class ProductsController < ApplicationController
           total: total,
           order_id: order.id,
           sku: product.model_number,
-          price: product.price
+          price: product.price,
+          label: label
         )
       end
     end

@@ -14,6 +14,7 @@
       <thead>
         <tr>
           <td>SKU</td>
+          <td>Label</td>
           <td>Quantity</td>
           <td>Price</td>
           <td>Total</td>
@@ -38,7 +39,7 @@
         $("#manual-entry").trigger('click');
       }
   });
-  
+
   $("#manual-entry").click(function(){
     $.ajax({
       type: "POST",
@@ -74,8 +75,8 @@
           });
 
           if(!row_exist && parseInt(res.data['inventory']) > 0){
-            row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control variant-price-'+ res.data['model_number'] +'" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
-              $('#scanned-item-body').append(row);
+            row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="text" name="label[]" class="form-control" placeholder="Enter any text" id="inventory_label"> </td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control variant-price-'+ res.data['model_number'] +'" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
+            $('#scanned-item-body').prepend(row);
           }
 
           if(parseInt(res.data['inventory']) == 0){
@@ -188,8 +189,8 @@
                   });
 
                   if(!row_exist && parseInt(res.data['inventory']) > 0){
-                    row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
-                      $('#scanned-item-body').append(row);
+                    row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="text" name="label[]" class="form-control" placeholder="Enter any text" id="inventory_label"> </td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
+                    $('#scanned-item-body').prepend(row);
                   }
 
                   if(parseInt(res.data['inventory']) == 0){

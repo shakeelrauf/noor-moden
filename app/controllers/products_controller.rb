@@ -14,7 +14,15 @@ class ProductsController < ApplicationController
     if params[:query].present?
       @products = Product.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
     else
-      @products = Product.paginate(page: params[:page], per_page: 10)
+      if params[:sort_by] == 'modelAsc'
+        @products = Product.order('model_number').paginate(page: params[:page], per_page: 10)
+      elsif params[:sort_by] == 'modelDsc'
+        @products = Product.order('model_number DESC').paginate(page: params[:page], per_page: 10)
+      elsif params[:sort_by] == 'dateAsc'
+        @products = Product.order('updated_at').paginate(page: params[:page], per_page: 10)
+      else
+        @products = Product.order('updated_at DESC').paginate(page: params[:page], per_page: 10)
+      end
     end
   end
 
@@ -70,13 +78,11 @@ class ProductsController < ApplicationController
   end
 
   def export
-    # Product.all.export
     ProductsImportExportJob.perform_later('export');
     redirect_to products_path, notice: "Exporting Products..."
   end
 
   def import
-    # Product.import(params[:file].path, 5)
     spreadsheet = Spreadsheet.new(file_type: 'import')
     spreadsheet.file.attach(params[:file])
     spreadsheet.save

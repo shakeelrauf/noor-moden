@@ -2,44 +2,36 @@
   <p id="notice"><%= notice %></p>
 
   <h1>Products</h1>
-  <%= link_to 'New Product', new_product_path, class: "btn btn-primary", style: 'float: right;margin-bottom: 10px;' %>
-  <%= link_to 'Export Products', export_products_path, class: "btn btn-primary", style: 'float: right;margin-bottom: 10px;margin-right: 2px;' %>
-  <button class="btn btn-primary import-btn" style='float: right;margin-bottom: 10px;margin-right: 2px;'>Import Products</button>
+  <div class="row">
+    <div class="col-4">
+      <%= link_to 'New Product', new_product_path, class: "btn btn-primary", style: 'margin-bottom: 10px;' %>
+      <button class="btn btn-primary import-btn" style='margin-bottom: 10px;margin-left: 2px;'>Import
+        Products</button>
+    </div>
   
-  <!-- <%= form_tag import_products_path, multipart: true do %>
-    <%= file_field_tag :file, required: true %>
-    <%= submit_tag "Import" %>
-  <% end %> -->
-
-  <div id="importProductsModal" class="modal fade" role="dialog">
-      <div class="modal-dialog">
-        <div class="modal-content">
-          <div class="modal-header">
-            <span class="modal-title">Import Products</span>
-            <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-              <span aria-hidden="true">&times;</span>
-            </button>
-          </div>
-          <%= form_tag import_products_path, multipart: true do %>
-            <div class="modal-body">
-                <div class="flex field">
-                  <label>Excel Spreadsheet</label>
-                  <%= file_field_tag :file, class: 'file-filed', required: true %>
-                </div>
-              </div>
-              <div class="modal-footer">
-                <button class="btn btn-primary import-btn" type="submit">Import</button>
-              </div>
-          <% end %>
+    <div class="col-4">
+      <form action="/products">
+        <div class="form-group">
+          <input type="text" name="query" value="<%= params[:query] %>" class='form-control'
+            placeholder="Search using product or variant id">
         </div>
+      </form>
+    </div>
+    <div class="col-4 flex-div">
+      <div class="select-div-wrapper">
+        <form action="<%= products_path %>">
+          <%= select_tag :sort_by, options_for_select(sorting_options, params[:sort_by]), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary' %>
+        </form>
+      </div>
+      <div>
+        <%= link_to 'Export Products', export_products_path, class: "btn btn-primary", style: 'float: right; margin-bottom: 10px;' %>
       </div>
     </div>
+  </div>
 
-  <form action="/products">
-    <div class="form-group">
-      <input type="text" name="query" value="<%= params[:query] %>" class='form-control col-6' placeholder="Search using product or variant id">
-    </div>
-  </form>
+  
+
+  
   <table class="table table-striped">
     <thead>
       <tr>
@@ -55,23 +47,23 @@
 
     <tbody>
       <% @products.each do |product| %>
-        <tr>
-          <td><%= product.model_number %></td>
-          <td><%= product.shopify_product_id %></td>
-          <td><%= product.variant_id %></td>
-          <td><%= product.inventory %></td>
-          <td>
-            <%= product.barcode.to_s.html_safe %>
-            <br/>
-            <span>000<%= product.id %></span>
-          </td>
-          <td><%= product.price %></td>
-          <td><%= link_to 'Show', product %></td>
-          <td><%= link_to 'Edit', edit_product_path(product) %></td>
-          <% if current_user.role == "admin" %>
-            <td><%= link_to 'Destroy', product, method: :delete, data: { confirm: 'Are you sure?' } %></td>
-          <% end %>
-        </tr>
+      <tr>
+        <td><%= product.model_number %></td>
+        <td><%= product.shopify_product_id %></td>
+        <td><%= product.variant_id %></td>
+        <td><%= product.inventory %></td>
+        <td>
+          <%= product.barcode.to_s.html_safe %>
+          <br />
+          <span>000<%= product.id %></span>
+        </td>
+        <td><%= product.price %></td>
+        <td><%= link_to 'Show', product %></td>
+        <td><%= link_to 'Edit', edit_product_path(product) %></td>
+        <% if current_user.role == "admin" %>
+        <td><%= link_to 'Destroy', product, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+        <% end %>
+      </tr>
       <% end %>
     </tbody>
   </table>
@@ -80,11 +72,14 @@
     <%= will_paginate @products %>
   </div>
 
+  <%= render 'import_products' %>
+
 </div>
 <style type="text/css">
-  .pagination-index .pagination{
+  .pagination-index .pagination {
     justify-content: center !important;
   }
+
   #notice {
     position: absolute;
     top: 6em;
@@ -92,15 +87,31 @@
     right: 0;
     left: 0;
   }
+
+  .select-div-wrapper {
+    margin-right: 5px;
+  }
+
+  .flex-div {
+    display: flex;
+    justify-content: flex-end;
+  }
 </style>
 
 <script>
-  setTimeout(function() {
-    $('#notice').fadeOut('fast');
-  }, 3000);
+  $(document).ready(function () {
+    setTimeout(function () {
+      $('#notice').fadeOut('fast');
+    }, 3000);
 
-  $('.import-btn').click(function(){
-    $('#importProductsModal').modal('show');
-  });
+    $('.import-btn').click(function () {
+      $('#importProductsModal').modal('show');
+    });
+
+    $('#mySelect').on('change', function() {
+      var value = $(this).val();
+      alert(value);
+    });
+  })
 
 </script>

@@ -63,7 +63,8 @@
                   alert("Inventory max limit reach");
                 }else{
                   inventory_qty.val(parseInt(inventory_qty.val()) + 1)
-                  var total = parseFloat(inventory_qty.val()) * parseFloat(res.data['price'])
+                  // var total = parseFloat(inventory_qty.val()) * parseFloat(res.data['price'])
+                  var total = parseFloat(inventory_qty.val()) * parseFloat($(".variant-price-"+ res.data['model_number']).val())
                   $(this).find("#subtotal").text(total.toFixed(2));
                   $(this).find("#subtotal-input").val(total.toFixed(2));
                 }
@@ -73,7 +74,7 @@
           });
 
           if(!row_exist && parseInt(res.data['inventory']) > 0){
-            row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
+            row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control variant-price-'+ res.data['model_number'] +'" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
               $('#scanned-item-body').append(row);
           }
 
@@ -176,7 +177,8 @@
                           alert("Inventory max limit reach");
                         }else{
                           inventory_qty.val(parseInt(inventory_qty.val()) + 1)
-                          var total = parseFloat(inventory_qty.val()) * parseFloat(res.data['price'])
+                          // var total = parseFloat(inventory_qty.val()) * parseFloat(res.data['price'])
+                        var total = parseFloat(inventory_qty.val()) * parseFloat($(".variant-price-"+ res.data['model_number']).val())
                           $(this).find("#subtotal").text(total.toFixed(2));
                           $(this).find("#subtotal-input").val(total.toFixed(2));
                         }

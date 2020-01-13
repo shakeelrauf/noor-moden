@@ -147,12 +147,11 @@ class ProductsController < ApplicationController
     db_ids = params[:product_db_id]
     new_qtys = params[:new_qty]
     totals = params[:subtotal]
-    labels = params[:label]
     actual_qtys = params[:actual_qty]
     order_sum = totals.collect { |total| total.to_f }.sum
     qty_sum = new_qtys.collect { |qty| qty.to_i }.sum
-    order = Order.create(total: order_sum, order_qty: qty_sum)
-    db_ids.zip(new_qtys, totals, actual_qtys, labels).each do |id, new_qty, total, actual_qty, label|
+    order = Order.create(total: order_sum, order_qty: qty_sum, label: params[:label])
+    db_ids.zip(new_qtys, totals, actual_qtys).each do |id, new_qty, total, actual_qty|
       qty = actual_qty.to_i - new_qty.to_i
       product = Product.find(id)
       if product.variant_id.present?
@@ -166,8 +165,7 @@ class ProductsController < ApplicationController
           total: total,
           order_id: order.id,
           sku: product.model_number,
-          price: product.price,
-          label: label
+          price: product.price
         )
       else
         product.inventory = qty
@@ -179,8 +177,7 @@ class ProductsController < ApplicationController
           total: total,
           order_id: order.id,
           sku: product.model_number,
-          price: product.price,
-          label: label
+          price: product.price
         )
       end
     end

@@ -14,6 +14,7 @@
     <thead>
       <tr>
         <th>Order Id</th>
+        <th>Order Name</th>
         <th>Order qty</th>
         <th>Order Total</th>
         <th>Status</th>
@@ -26,6 +27,7 @@
       <% @orders.each do |order| %>
         <tr>
           <td><%= order.id %></td>
+          <td><%= order.label %></td>
           <td><%= order.order_qty %></td>
           <td><%= order.total %></td>
           <td><%= order.status %></td>

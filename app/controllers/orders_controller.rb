@@ -9,6 +9,8 @@ class OrdersController < ApplicationController
     else
       @orders = Order.paginate(page: params[:page], per_page: 10)
     end
+      @orders = @orders.order("created_at asc")
+      @sorted_orders = @orders.all.group_by {|item| item.created_at.to_date }
   end
 
   # GET /orders/1

@@ -24,30 +24,35 @@
     </thead>
 
     <tbody>
-      <% @orders.each do |order| %>
-        <tr>
-          <td><%= order.id %></td>
-          <td><%= order.label %></td>
-          <td><%= order.order_qty %></td>
-          <td><%= order.total %></td>
-          <td><%= order.status %></td>
-          <td><%= order.created_at.strftime('%Y-%m-%d, %I:%M:%S:%p') %></td>
-          <td><%#= link_to 'Edit', edit_order_path(order) %></td>
-            <td>
-              <%= link_to 'Detail', order %>
-            </td>
-            <% if current_user.role == "admin" %>
+      <%# count = 0 %>
+      <%# date = "" %>
+      <% @sorted_orders.each do |order, val| %>
+        <% count = 0 %>
+        <% val.each do |order| %>
+          <tr>
+            <td><%= count += 1 %></td>
+            <td><%= order.label %></td>
+            <td><%= order.order_qty %></td>
+            <td><%= order.total %></td>
+            <td><%= order.status %></td>
+            <td><%= order.created_at.strftime('%Y-%m-%d, %I:%M:%S:%p') %></td>
+            <td><%#= link_to 'Edit', edit_order_path(order) %></td>
               <td>
-                <%= link_to 'Delete', order, method: :delete, data: { confirm: 'Are you sure?' } %>
+                <%= link_to 'Detail', order %>
               </td>
-            <% end %>
-              <% if order.status === 'Processed' %>
+              <% if current_user.role == "admin" %>
                 <td>
-                  <%= link_to 'Cancel', cancel_order_path(id: order.id), data: { confirm: 'Are you sure?' } %>
+                  <%= link_to 'Delete', order, method: :delete, data: { confirm: 'Are you sure?' } %>
                 </td>
               <% end %>
-            </td>
-        </tr>
+                <% if order.status === 'Processed' %>
+                  <td>
+                    <%= link_to 'Cancel', cancel_order_path(id: order.id), data: { confirm: 'Are you sure?' } %>
+                  </td>
+                <% end %>
+              </td>
+          </tr>
+        <% end %>
       <% end %>
     </tbody>
   </table>

@@ -17,6 +17,7 @@
           <td>Quantity</td>
           <td>Price</td>
           <td>Total</td>
+          <td></td>
         </tr>
       </thead>
       <tbody id="scanned-item-body">
@@ -24,6 +25,8 @@
     </table>
     <strong>
       <span style="float: right;margin-right: 4%;" id="rows_subtotal">Subtotal: <b></b></span>
+      <br>
+      <span style="float: right;margin-right: 4%;" id="rows_subquantity">Total Quantity: <b></b></span>
     </strong>
     <br>
     <br>
@@ -40,6 +43,19 @@
       }
   });
 
+  function remove(elmnt){
+    id = $(elmnt).parent().parent().attr('id')
+    $(`#${id}`).remove();
+    var rows_subtotal = 0.0;
+    var rows_subquantity = 0;
+    $('#scanned-item-body tr').each(function(){
+      rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+      rows_subquantity = rows_subquantity + parseInt($(this).find("#inventory-qty")[0].value);
+    });
+    $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+    $("#rows_subquantity b").text(rows_subquantity);
+  }
+
   $("#manual-entry").click(function(){
     $.ajax({
       type: "POST",
@@ -53,6 +69,7 @@
           var inventory_qty;
           var row_exist = false;
           var rows_subtotal = 0.0;
+          var rows_subquantity = 0;
           $('#scanned-item-body tr').each(function(){
             product_db_id = $(this).find("#product_db_id");
             if(product_db_id.length > 0){
@@ -75,7 +92,7 @@
           });
 
           if(!row_exist && parseInt(res.data['inventory']) > 0){
-            row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control variant-price-'+ res.data['model_number'] +'" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="'+ res.data['price'] +'" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
+            row ='<tr id=row_' + res.data['id'] + '><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control variant-price-'+ res.data['model_number'] +'" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="'+ res.data['price'] +'" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td> <td><a class="delete-link" onclick="remove(this)"><i class="fa fa-close"></i></a></td></tr>';
             $('#scanned-item-body').prepend(row);
           }
 
@@ -84,11 +101,14 @@
           }
 
           $("#rows_subtotal").show();
+          $("#rows_subquantity").show();
           $('#scanned-item-body tr').each(function(){
             rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+            rows_subquantity = rows_subquantity + parseInt($(this).find("#inventory-qty")[0].value);
           });
 
           $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+          $("#rows_subquantity b").text(rows_subquantity);
           $("#start-scanning").hide();
         }
         else{
@@ -98,10 +118,13 @@
     });
   });
 
+
   $("#rows_subtotal").hide();
+  $("#rows_subquantity").hide();
   $('body').on('keyup', '#inventory-qty, #variant-price', function(){
     var row = $(this).parent().parent();
     var rows_subtotal = 0.0;
+    var rows_subquantity = 0.0;
     var attribute_id = $(this).attr('id')
     if (attribute_id == 'inventory-qty')
       var total = parseFloat($(this).val()) * parseFloat(row.find("#variant-price").val());
@@ -125,9 +148,15 @@
 
     $('#scanned-item-body tr').each(function(){
       rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+      quantity = parseInt($(this).find("#inventory-qty")[0].value);
+      if (isNaN(quantity)) {
+        quantity = 0
+      }
+      rows_subquantity = rows_subquantity + quantity;
     });
 
     $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+    $("#rows_subquantity b").text(rows_subquantity);
   });  
 
   function order_by_occurrence(arr) {
@@ -189,7 +218,7 @@
                   });
 
                   if(!row_exist && parseInt(res.data['inventory']) > 0){
-                    row ='<tr><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="'+ res.data['price'] +'" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td></tr>';
+                    row ='<tr id=row_' + res.data['id'] + '><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control"> </td><td> <input class="form-control" type="number" min="0" step=".01" value="'+ res.data['price'] +'" id="variant-price"> </td><td> <input type="hidden" name="subtotal[]" value="'+ res.data['price'] +'" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td> <td><a class="delete-link" onclick="remove(this)"><i class="fa fa-close"></i></a></td></tr>';
                     $('#scanned-item-body').prepend(row);
                   }
 
@@ -198,11 +227,14 @@
                   }
 
                   $("#rows_subtotal").show();
+                  $("#rows_subquantity").show();
                   $('#scanned-item-body tr').each(function(){
                     rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+                    rows_subquantity = rows_subquantity + parseInt($(this).find("#inventory-qty")[0].value);
                   });
 
                   $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+                  $("#rows_subquantity b").text(rows_subquantity);
                   $("#start-scanning").hide();
                   setTimeout(function(){
                     load_quagga();
@@ -258,5 +290,9 @@
   #barcode-scanner canvas, #barcode-scanner video {
     width: 100%;
     height: auto;
+  }
+
+  .delete-link {
+    cursor: pointer;
   }
 </style>

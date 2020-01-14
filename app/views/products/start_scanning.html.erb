@@ -6,8 +6,13 @@
   <br>
   <br>
 
-  <div>
-    <input type="text" name="" placeholder="Enter SKU" id="manual-sku-code"><button id="manual-entry" style="margin-bottom: 4px;margin-left: 4px;" class="btn btn-primary btn-sm">Manual Entry</button>
+  <div class="manual-entry-row">
+    <div>
+      <input type="text" name="" placeholder="Enter SKU" id="manual-sku-code"><button id="manual-entry" style="margin-bottom: 4px;margin-left: 4px;" class="btn btn-primary btn-sm">Manual Entry</button>
+    </div>
+    <div>
+      <input class="order-name" type="text" placeholder="Enter Order Name">
+    </div>
   </div>
   <form id="order-form" action="/products/create_order" method="get">
     <table class="table">
@@ -30,7 +35,7 @@
     </strong>
     <br>
     <br>
-    <input type="text" name="label" placeholder="Order Name">
+    <input style="display: none" class="order-name-input" type="text" name="label" placeholder="Enter Order Name">
     <button type="submit" class="btn btn-primary" id="create-order">Create Order</button>
   </form>
 </div>
@@ -41,6 +46,10 @@
       if (e.keyCode === 13) {
         $("#manual-entry").trigger('click');
       }
+  });
+
+  $('.order-name').on('keyup', function(){
+    $('.order-name-input').val($(this).val())
   });
 
   function remove(elmnt){
@@ -294,5 +303,10 @@
 
   .delete-link {
     cursor: pointer;
+  }
+
+  .manual-entry-row {
+    display: flex;
+    justify-content: space-between;
   }
 </style>

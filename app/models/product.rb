@@ -72,9 +72,14 @@ class Product < ApplicationRecord
       product = Product.find_by(model_number: model_number)
       if product.present? && row_data[6].downcase == 'on'
         product.update(inventory: row_data[4].to_i, price: price)
-        update_variant_price(product.variant_id, product.inventory, product.price)
+        if product.inventory.to_i != row_data[4].to_i || product.price.to_i != price
+          update_variant_price(product.variant_id, product.inventory, product.price)
+        end
       elsif product.present? && row_data[6].downcase == 'off'
         product.delete
+        if product.shopify_product_id.present?
+          delete_variant(product.shopify_product_id, product.variant_id)
+        end
       elsif !product.present? && row_data[6].downcase == 'on'
         new_product = Product.new(model_number: model_number, inventory: row_data[4].to_i, price: price)
         code = "000-" + new_product.id.to_s
@@ -105,6 +110,12 @@ class Product < ApplicationRecord
              },
       :headers => {
         'X-Shopify-Access-Token' => ENV['Access_Token']})
+  end
+
+  def self.delete_variant(product_id, variant_id)
+      @result = HTTParty.delete("https://noor-moden.myshopify.com/admin/api/2019-07/products/#{product_id}/variants/#{variant_id}.json",
+        :headers => {
+          'X-Shopify-Access-Token' => ENV['Access_Token']})
     end
 
 end

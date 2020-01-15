@@ -66,7 +66,8 @@ class Product < ApplicationRecord
     header = spreadsheet.row(1)
     (2..spreadsheet.last_row).each do |i|
       row_data = spreadsheet.row(i)
-      model_number = row_data[0].to_s.sub(/\.?0+$/, '')
+      # model_number = row_data[0].to_s.sub(/\.?0+$/, '')
+      model_number = row_data[0].to_s
       price = row_data[5].to_s.split(' ')[0].to_f
       product = Product.find_by(model_number: model_number)
       if product.present? && row_data[6].downcase == 'on'

@@ -49,11 +49,14 @@ class OrdersController < ApplicationController
     @lineitems = @order.lineitems
     pdf = WickedPdf.new.pdf_from_string(
       render_to_string('orders/download_order.html.erb', layout: false, locals: { :@order => @order, :@lineitems => @lineitems }),
-      :page_size => 'Letter',
+      :page_size => 'A4',
+      :encoding => 'utf8',
       footer: {
         content: render_to_string(
           'orders/footer.html.erb',
-          layout: "pdf"
+          layout: "pdf",
+          :encoding => 'utf8',
+          :page_size => 'A4',
         )
       }
     )

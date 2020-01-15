@@ -47,7 +47,17 @@ class OrdersController < ApplicationController
   def print_order
     @order = Order.find(params[:id])
     @lineitems = @order.lineitems
-    pdf = render_to_string pdf: "new_pdf", template: "orders/download_order.html.erb", encoding: "UTF-8",layout: false, locals: { :@order => @order, :@lineitems => @lineitems }
+    pdf = WickedPdf.new.pdf_from_string(
+      render_to_string('orders/download_order.html.erb', layout: false, locals: { :@order => @order, :@lineitems => @lineitems }),
+      :page_size => 'Letter',
+      footer: {
+        content: render_to_string(
+          'orders/footer.html.erb',
+          layout: "pdf"
+        )
+      }
+    )
+    # pdf = render_to_string pdf: "new_pdf", template: "orders/download_order.html.erb", encoding: "UTF-8",layout: false, locals: { :@order => @order, :@lineitems => @lineitems }
     send_data pdf, filename: "order-num-#{@order.id}-invoice.pdf"
   end
 
@@ -112,4 +122,28 @@ class OrdersController < ApplicationController
         :headers => {
           'X-Shopify-Access-Token' => ENV['Access_Token']})
     end
+
+    # def puts_input
+    #   puts "Enter input"
+    #   get_input = gets.chomp
+    #   get_input = get_input.to_s
+    #   p1,p2,p3 = "", "", "" 
+    #   values_array = get_input.split('')
+    #   values_array.each do |value|
+    #     if value == values_array[0]
+    #       p1 += " --- "
+    #       p2 += "| #{value} |"
+    #       p3 += " === "
+    #     else
+    #       p1 += "  --- "
+    #       p2 += "*| #{value} |"
+    #       p3 += "  === "
+    #     end
+    #   end
+    #   puts p1
+    #   puts p2
+    #   puts p3
+    #   puts_input
+    # end
+
 end

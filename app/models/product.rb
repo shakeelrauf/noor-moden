@@ -95,7 +95,7 @@ class Product < ApplicationRecord
     end
   end
 
-  def update_variant_price(variant_id, qty, price)
+  def self.update_variant_price(variant_id, qty, price)
     @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2019-07/variants/#{variant_id}.json",
       :body => { 
                 "variant": {:id=> variant_id, 

@@ -72,7 +72,7 @@ class Product < ApplicationRecord
       product = Product.find_by(model_number: model_number)
       if product.present? && row_data[6].downcase == 'on'
         product.update(inventory: row_data[4].to_i, price: price)
-        # update_variant_price(product.variant_id, product.inventory, product.price)
+        update_variant_price(product.variant_id, product.inventory, product.price)
       elsif product.present? && row_data[6].downcase == 'off'
         product.delete
       elsif !product.present? && row_data[6].downcase == 'on'

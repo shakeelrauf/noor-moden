@@ -135,7 +135,7 @@ class ProductsController < ApplicationController
   end
 
   def get_barcode_from_sku
-    @product = Product.where(model_number: params[:barcode]).first
+    @product = Product.where(model_number: params[:barcode].downcase).or(Product.where(model_number: params[:barcode].upcase)).first
     if @product.present?
       render json: { data: @product.as_json, status: 200 }
     else

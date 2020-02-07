@@ -12,7 +12,7 @@
     <div class="col-4">
       <form action="/products">
         <div class="form-group">
-          <input type="text" name="query" value="<%= params[:query] %>" class='form-control'
+          <input id="search-autocomplete" type="text" name="query" value="<%= params[:query] %>" class='form-control'
             placeholder="Search using product or variant id">
         </div>
       </form>
@@ -96,10 +96,22 @@
     display: flex;
     justify-content: flex-end;
   }
+
+  .ui-autocomplete  {
+    height: max-content;
+    max-height: 50vh;
+    overflow-y: scroll;
+  }
+  
 </style>
 
 <script>
   $(document).ready(function () {
+
+    $('#search-autocomplete').autocomplete({
+      source: '/suggestions'
+    })
+
     setTimeout(function () {
       $('#notice').fadeOut('fast');
     }, 3000);

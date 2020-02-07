@@ -26,6 +26,12 @@ class ProductsController < ApplicationController
     end
   end
 
+  def suggestions
+    @products = Product.search_by_shopify_ids(params[:term])
+    # @products = Product.where("model_number ILIKE ?", "%#{params[:term]}%").limit(10)
+    render json: @products.map(&:model_number).uniq 
+  end
+
   # GET /products/1
   # GET /products/1.json
   def show

@@ -38,7 +38,7 @@
             <td><%= order.created_at.strftime('%d/%m/%Y, %I:%M:%S:%p') %></td>
             <td><%#= link_to 'Edit', edit_order_path(order) %></td>
               <td>
-                <%= link_to 'Detail', order %>
+                <%= link_to 'Detail', order_path(order, order_id: count) %>
               </td>
               <% if current_user.role == "admin" %>
                 <td>

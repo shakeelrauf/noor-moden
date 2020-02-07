@@ -46,9 +46,10 @@ class OrdersController < ApplicationController
 
   def print_order
     @order = Order.find(params[:id])
+    @real_order_id = params[:real_order_id]
     @lineitems = @order.lineitems
     pdf = WickedPdf.new.pdf_from_string(
-      render_to_string('orders/download_order.html.erb', layout: false, locals: { :@order => @order, :@lineitems => @lineitems }),
+      render_to_string('orders/download_order.html.erb', layout: false, locals: { :@order => @order, :@lineitems => @lineitems, :@real_order_id => @real_order_id }),
       :page_size => 'A4',
       :encoding => 'utf8',
       footer: {

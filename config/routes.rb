@@ -24,5 +24,6 @@ Rails.application.routes.draw do
   get '/print_order' => 'orders#print_order'
 
   get '/suggestions' => 'products#suggestions', as: 'suggestions'
+  get '/modelnumbers' => 'products#modelnumbers', as: 'modelnumbers'
 
 end

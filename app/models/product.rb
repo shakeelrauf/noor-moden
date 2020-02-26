@@ -5,6 +5,9 @@ class Product < ApplicationRecord
   pg_search_scope :search_by_shopify_ids, against: [:variant_id, :shopify_product_id, :inventory, :model_number],using: {
                     tsearch: { prefix: true }
                   }
+  pg_search_scope :search_by_sku, against: [:model_number],using: {
+                    tsearch: { prefix: true }
+                  }
 
   require 'barby/barcode/code_128'
   require 'barby/outputter/ascii_outputter'
@@ -81,7 +84,7 @@ class Product < ApplicationRecord
           delete_variant(product.shopify_product_id, product.variant_id)
         end
       elsif !product.present? && row_data[6].downcase == 'on'
-        new_product = Product.new(model_number: model_number, inventory: row_data[4].to_i, price: price)
+        new_product = Product.create(model_number: model_number, inventory: row_data[4].to_i, price: price)
         code = "000-" + new_product.id.to_s
         barcode = Barby::Code128.new(code).to_svg(margin: 0)
         barcode = barcode.sub!('<svg ', '<svg preserveAspectRatio="none" ')

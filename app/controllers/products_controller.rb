@@ -31,6 +31,11 @@ class ProductsController < ApplicationController
     render json: @products.map(&:model_number).uniq 
   end
 
+  def modelnumbers
+    @products = Product.search_by_sku(params[:term])
+    render json: @products.map(&:model_number).uniq
+  end
+
   # GET /products/1
   # GET /products/1.json
   def show

@@ -45,6 +45,7 @@
   $("#manual-sku-code").on('keyup', function (e) {
       if (e.keyCode === 13) {
         $("#manual-entry").trigger('click');
+        $(this).select();
       }
   });
 

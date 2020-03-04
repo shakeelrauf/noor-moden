@@ -28,7 +28,7 @@
       <%# date = "" %>
       <% @sorted_orders.each do |order, val| %>
         <% count = 0 %>
-        <% val.each do |order| %>
+        <% val.reverse.each do |order| %>
           <tr>
             <td><%= count += 1 %></td>
             <td><%= order.label %></td>

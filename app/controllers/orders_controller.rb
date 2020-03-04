@@ -5,9 +5,9 @@ class OrdersController < ApplicationController
   # GET /orders.json
   def index
     if params[:query].present?
-      @orders = Order.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
+      @orders = Order.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 50)
     else
-      @orders = Order.paginate(page: params[:page], per_page: 10)
+      @orders = Order.paginate(page: params[:page], per_page: 50)
     end
       @orders = @orders.order("created_at desc")
       @sorted_orders = @orders.all.group_by {|item| item.created_at.to_date }

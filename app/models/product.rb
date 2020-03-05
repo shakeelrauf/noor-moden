@@ -8,7 +8,9 @@ class Product < ApplicationRecord
                     }
                   }
   pg_search_scope :search_by_sku, against: [:model_number],using: {
-                    tsearch: { prefix: true }
+                    trigram: {
+                      word_similarity: true
+                    }
                   }
 
   require 'barby/barcode/code_128'

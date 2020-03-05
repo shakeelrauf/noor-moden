@@ -27,10 +27,10 @@
       <%# count = 0 %>
       <%# date = "" %>
       <% @sorted_orders.each do |order, val| %>
-        <% count = 0 %>
-        <% val.reverse.each do |order| %>
+        <% count = val.count + 1 %>
+        <% val.each_with_index do |order, index| %>
           <tr>
-            <td><%= count += 1 %></td>
+            <td><%= count -=  1 %></td>
             <td><%= order.label %></td>
             <td><%= order.order_qty %></td>
             <td><%= order.total %></td>

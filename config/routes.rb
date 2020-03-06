@@ -17,6 +17,7 @@ Rails.application.routes.draw do
   post 'webhook/create_product' => 'products#create_product'
   post 'webhook/delete_product' => 'products#delete_product'
   post 'webhook/notify_new_customer_shopify_admin' => 'products#notify_new_customer_shopify_admin'
+  post '/change_sync' => 'products#change_sync'
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
 
   get '/get_hook' => 'webhook#get_hook'

@@ -11,6 +11,7 @@ class ProductsController < ApplicationController
   # GET /products
   # GET /products.json
   def index
+    @syncing_status = InventorySetting.last.is_syncing
     if params[:query].present?
       @products = Product.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
     else
@@ -23,6 +24,14 @@ class ProductsController < ApplicationController
       else
         @products = Product.order('updated_at DESC').paginate(page: params[:page], per_page: 10)
       end
+    end
+  end
+
+  def change_sync
+    if params[:is_syncing]
+      syncing = InventorySetting.last
+      syncing.is_syncing = !InventorySetting.last.is_syncing
+      syncing.save
     end
   end
 
@@ -101,21 +110,27 @@ class ProductsController < ApplicationController
   end
 
   def update_shopify_product
-    in_house_variants = Product.where(shopify_product_id: params[:id]).collect { |c| c.variant_id }
-    shopify_variant_ids = params[:variants].collect { |c| c["id"] }
-    deleted_variant_ids = in_house_variants - shopify_variant_ids
-    if deleted_variant_ids.present?
-      Product.where(variant_id: deleted_variant_ids).destroy_all
+    if InventorySetting.last.is_syncing == true
+      in_house_variants = Product.where(shopify_product_id: params[:id]).collect { |c| c.variant_id }
+      shopify_variant_ids = params[:variants].collect { |c| c["id"] }
+      deleted_variant_ids = in_house_variants - shopify_variant_ids
+      if deleted_variant_ids.present?
+        Product.where(variant_id: deleted_variant_ids).destroy_all
+      end
+      sync_shopify_data
     end
-    sync_shopify_data
   end
 
   def create_product
-    sync_shopify_data
+    if InventorySetting.last.is_syncing == true
+      sync_shopify_data
+    end
   end
 
   def delete_product
-    Product.where(shopify_product_id: params[:id]).destroy_all
+    if InventorySetting.last.is_syncing == true
+      Product.where(shopify_product_id: params[:id]).destroy_all
+    end
   end
 
   def notify_new_customer_shopify_admin

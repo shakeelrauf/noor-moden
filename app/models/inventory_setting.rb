@@ -1,0 +1,2 @@
+class InventorySetting < ApplicationRecord
+end

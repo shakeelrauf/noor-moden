@@ -19,6 +19,12 @@
     </div>
     <div class="col-4 flex-div">
       <div class="select-div-wrapper">
+        <form action="/change_sync" method="post">
+          <label>Syncing</label>
+          <%= select_tag :is_syncing, options_for_select(syncing_options, @syncing_status), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary' %>
+        </form>
+      </div>
+      <div class="select-div-wrapper">
         <form action="<%= products_path %>">
           <%= select_tag :sort_by, options_for_select(sorting_options, params[:sort_by]), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary' %>
         </form>
@@ -102,7 +108,11 @@
     max-height: 50vh;
     overflow-y: scroll;
   }
-  
+  .select-div-wrapper label {
+    position: absolute;
+    left: -6px;
+    top: 6px
+  }
 </style>
 
 <script>

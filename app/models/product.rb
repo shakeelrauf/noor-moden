@@ -3,14 +3,10 @@ class Product < ApplicationRecord
   require 'roo'
   include PgSearch::Model
   pg_search_scope :search_by_shopify_ids, against: [:variant_id, :shopify_product_id, :inventory, :model_number],using: {
-                    trigram: {
-                      word_similarity: true
-                    }
+                    tsearch: { prefix: true }
                   }
   pg_search_scope :search_by_sku, against: [:model_number],using: {
-                    trigram: {
-                      word_similarity: true
-                    }
+                    tsearch: { prefix: true }
                   }
 
   require 'barby/barcode/code_128'

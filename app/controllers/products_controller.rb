@@ -262,12 +262,20 @@ class ProductsController < ApplicationController
           product.barcode = barcode
           product.save
         else
-          product_present.variant_id = variant['id']
-          product_present.shopify_product_id = variant['product_id']
-          # product_present.price = variant['price']
-          product_present.inventory = variant['inventory_quantity']
-          product_present.model_number = variant['sku']
-          product_present.save
+          if InventorySetting.last.is_syncing == true
+            update_inventory(variant['id'], product_present.inventory)
+            product_present.variant_id = variant['id']
+            product_present.shopify_product_id = variant['product_id']
+            product_present.model_number = variant['sku']
+            product_present.save
+          else
+            product_present.variant_id = variant['id']
+            product_present.shopify_product_id = variant['product_id']
+            # product_present.price = variant['price']
+            product_present.inventory = variant['inventory_quantity']
+            product_present.model_number = variant['sku']
+            product_present.save
+          end
         end
       end
     end

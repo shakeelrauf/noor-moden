@@ -110,7 +110,7 @@ class ProductsController < ApplicationController
   end
 
   def update_shopify_product
-    if InventorySetting.last.is_syncing == true
+    # if InventorySetting.last.is_syncing == true
       in_house_variants = Product.where(shopify_product_id: params[:id]).collect { |c| c.variant_id }
       shopify_variant_ids = params[:variants].collect { |c| c["id"] }
       deleted_variant_ids = in_house_variants - shopify_variant_ids
@@ -118,19 +118,19 @@ class ProductsController < ApplicationController
         Product.where(variant_id: deleted_variant_ids).destroy_all
       end
       sync_shopify_data
-    end
+    # end
   end
 
   def create_product
-    if InventorySetting.last.is_syncing == true
+    # if InventorySetting.last.is_syncing == true
       sync_shopify_data
-    end
+    # end
   end
 
   def delete_product
-    if InventorySetting.last.is_syncing == true
+    # if InventorySetting.last.is_syncing == true
       Product.where(shopify_product_id: params[:id]).destroy_all
-    end
+    # end
   end
 
   def notify_new_customer_shopify_admin
@@ -262,7 +262,7 @@ class ProductsController < ApplicationController
           product.barcode = barcode
           product.save
         else
-          if InventorySetting.last.is_syncing == true
+          if InventorySetting.last.is_syncing == false
             update_inventory(variant['id'], product_present.inventory)
             product_present.variant_id = variant['id']
             product_present.shopify_product_id = variant['product_id']

@@ -249,7 +249,7 @@ class ProductsController < ApplicationController
         # product_present = Product.where(model_number: variant['sku']).first
         # product_present = Product.where(model_number: variant['sku']).or(Product.where(variant_id: variant['id'])).where.not(model_number: "").first
         product_present = Product.where(model_number: variant['sku']).where.not(model_number: "").first
-        if !product_present.present?
+        if !product_present.present? && variant['sku'].present?
           product = Product.create(shopify_product_id: variant['product_id'], 
             variant_id: variant['id'],
             inventory: variant['inventory_quantity'],

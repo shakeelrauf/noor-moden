@@ -249,18 +249,20 @@ class ProductsController < ApplicationController
         # product_present = Product.where(model_number: variant['sku']).first
         # product_present = Product.where(model_number: variant['sku']).or(Product.where(variant_id: variant['id'])).where.not(model_number: "").first
         product_present = Product.where(model_number: variant['sku']).where.not(model_number: "").first
-        if !product_present.present? && variant['sku'].present?
-          product = Product.create(shopify_product_id: variant['product_id'], 
-            variant_id: variant['id'],
-            inventory: variant['inventory_quantity'],
-            # price: variant['price'],
-            model_number: variant['sku']
-          )
-          code = "000-" + product.id.to_s
-          barcode = Barby::Code128.new(code).to_svg(margin: 0)
-          barcode = barcode.sub!('<svg ', '<svg preserveAspectRatio="none" ')
-          product.barcode = barcode
-          product.save
+        if !product_present.present?
+          if variant['sku'].present?
+            product = Product.create(shopify_product_id: variant['product_id'], 
+              variant_id: variant['id'],
+              inventory: variant['inventory_quantity'],
+              # price: variant['price'],
+              model_number: variant['sku']
+            )
+            code = "000-" + product.id.to_s
+            barcode = Barby::Code128.new(code).to_svg(margin: 0)
+            barcode = barcode.sub!('<svg ', '<svg preserveAspectRatio="none" ')
+            product.barcode = barcode
+            product.save
+          end
         else
           puts "PRODUCT PRESENT"
           if InventorySetting.last.is_syncing == false

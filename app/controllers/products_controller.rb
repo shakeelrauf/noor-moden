@@ -262,8 +262,14 @@ class ProductsController < ApplicationController
           product.barcode = barcode
           product.save
         else
+          puts "PRODUCT PRESENT"
           if InventorySetting.last.is_syncing == false
-            update_inventory(variant['id'], product_present.inventory)
+            puts "SYNCING FALSE"
+            puts "PRODUCT DETAILS ********#{product_present.as_json}"
+            if product_present.inventory != variant['inventory_quantity']
+              update_inventory(variant['id'], product_present.inventory)
+              sleep 2
+            end
             product_present.variant_id = variant['id']
             product_present.shopify_product_id = variant['product_id']
             product_present.model_number = variant['sku']

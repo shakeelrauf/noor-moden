@@ -266,7 +266,7 @@ class ProductsController < ApplicationController
           if InventorySetting.last.is_syncing == false
             puts "SYNCING FALSE"
             puts "PRODUCT DETAILS ********#{product_present.as_json}"
-            if product_present.inventory != variant['inventory_quantity']
+            if product_present.inventory.to_s != variant['inventory_quantity'].to_s
               update_inventory(variant['id'], product_present.inventory)
               sleep 2
             end

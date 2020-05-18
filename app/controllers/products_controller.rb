@@ -182,6 +182,10 @@ class ProductsController < ApplicationController
       product = Product.find(id)
       if product.variant_id.present?
         result = update_inventory(product.variant_id, qty)
+        if InventorySetting.last.is_syncing == false
+          product.inventory = qty
+          product.save
+        end
         Lineitem.create(
           variant_id: product.variant_id,
           shopify_product_id: product.shopify_product_id,

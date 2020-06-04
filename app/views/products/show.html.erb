@@ -176,6 +176,9 @@
     }
   };
 
+    $("#create-order").click(function(){
+      $(':button[type="submit"]').prop('disabled', true);
+    });
   // $(document).on('turbolinks:load', load_quagga);
 </script>
 

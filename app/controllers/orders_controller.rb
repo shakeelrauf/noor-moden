@@ -1,5 +1,7 @@
 class OrdersController < ApplicationController
   before_action :set_order, only: [:show, :edit, :update, :destroy]
+  skip_before_action :verify_authenticity_token, only: %i[webhook_create_order webhook_cancel_order]
+  skip_before_action :authenticate_user!, only: %i[webhook_create_order webhook_cancel_order]
 
   # GET /orders
   # GET /orders.json
@@ -26,6 +28,32 @@ class OrdersController < ApplicationController
 
   # GET /orders/1/edit
   def edit
+  end
+
+  def webhook_create_order
+    ids =  params["line_items"].collect {|item| item["variant_id"]}
+    params["line_items"].each do |line_item|
+      products = Product.where(variant_id: ids)
+      products.each do |product|
+        quantity = product.inventory.to_i - line_item["quantity"]
+        product.inventory = quantity
+        product.save
+      end
+    end
+    head 200
+  end
+
+  def webhook_cancel_order
+    ids =  params["line_items"].collect {|item| item["variant_id"]}
+    params["line_items"].each do |line_item|
+      products = Product.where(variant_id: ids)
+      products.each do |product|
+        quantity = product.inventory.to_i + line_item["quantity"]
+        product.inventory = quantity
+        product.save
+      end
+    end
+    head 200
   end
 
   def cancel_order
@@ -131,7 +159,7 @@ class OrdersController < ApplicationController
     #   puts "Enter input"
     #   get_input = gets.chomp
     #   get_input = get_input.to_s
-    #   p1,p2,p3 = "", "", "" 
+    #   p1,p2,p3 = "", "", ""
     #   values_array = get_input.split('')
     #   values_array.each do |value|
     #     if value == values_array[0]

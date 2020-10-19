@@ -31,10 +31,9 @@ class OrdersController < ApplicationController
   end
 
   def webhook_create_order
-    ids =  params["line_items"].collect {|item| item["variant_id"]}
     params["line_items"].each do |line_item|
-      products = Product.where(variant_id: ids)
-      products.each do |product|
+      product = Product.find_by(variant_id: line_item["variant_id"])
+      if product.present?
         quantity = product.inventory.to_i - line_item["quantity"]
         product.inventory = quantity
         product.save
@@ -44,10 +43,9 @@ class OrdersController < ApplicationController
   end
 
   def webhook_cancel_order
-    ids =  params["line_items"].collect {|item| item["variant_id"]}
     params["line_items"].each do |line_item|
-      products = Product.where(variant_id: ids)
-      products.each do |product|
+      product = Product.find_by(variant_id: line_item["variant_id"])
+      if product.present?
         quantity = product.inventory.to_i + line_item["quantity"]
         product.inventory = quantity
         product.save

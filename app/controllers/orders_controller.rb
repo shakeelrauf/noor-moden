@@ -1,5 +1,7 @@
 class OrdersController < ApplicationController
   before_action :set_order, only: [:show, :edit, :update, :destroy]
+  skip_before_action :verify_authenticity_token, only: %i[webhook_create_order webhook_cancel_order]
+  skip_before_action :authenticate_user!, only: %i[webhook_create_order webhook_cancel_order]
 
   # GET /orders
   # GET /orders.json
@@ -28,6 +30,30 @@ class OrdersController < ApplicationController
   def edit
   end
 
+  def webhook_create_order
+    params["line_items"].each do |line_item|
+      product = Product.find_by(variant_id: line_item["variant_id"])
+      if product.present?
+        quantity = product.inventory.to_i - line_item["quantity"]
+        product.inventory = quantity
+        product.save
+      end
+    end
+    head 200
+  end
+
+  def webhook_cancel_order
+    params["line_items"].each do |line_item|
+      product = Product.find_by(variant_id: line_item["variant_id"])
+      if product.present?
+        quantity = product.inventory.to_i + line_item["quantity"]
+        product.inventory = quantity
+        product.save
+      end
+    end
+    head 200
+  end
+
   def cancel_order
     order = Order.find(params[:id])
     order.lineitems.each do |item|
@@ -52,6 +78,7 @@ class OrdersController < ApplicationController
       render_to_string('orders/download_order.html.erb', layout: false, locals: { :@order => @order, :@lineitems => @lineitems, :@real_order_id => @real_order_id }),
       :page_size => 'A4',
       :encoding => 'utf8',
+      show_as_html: true,
       footer: {
         content: render_to_string(
           'orders/footer.html.erb',
@@ -62,7 +89,7 @@ class OrdersController < ApplicationController
       }
     )
     # pdf = render_to_string pdf: "new_pdf", template: "orders/download_order.html.erb", encoding: "UTF-8",layout: false, locals: { :@order => @order, :@lineitems => @lineitems }
-    send_data pdf, filename: "order-num-#{@order.id}-invoice.pdf"
+    send_data pdf, filename: "order-num-#{@order.id}-invoice.pdf", type: 'application/pdf', disposition: 'attachment'
   end
 
   # POST /orders
@@ -131,7 +158,7 @@ class OrdersController < ApplicationController
     #   puts "Enter input"
     #   get_input = gets.chomp
     #   get_input = get_input.to_s
-    #   p1,p2,p3 = "", "", "" 
+    #   p1,p2,p3 = "", "", ""
     #   values_array = get_input.split('')
     #   values_array.each do |value|
     #     if value == values_array[0]

@@ -36,6 +36,7 @@
     <br>
     <br>
     <input style="display: none" class="order-name-input" type="text" name="label" placeholder="Enter Order Name">
+    <%= hidden_field_tag "random_token", session[:create_order_random_token] %>
     <button type="submit" class="btn btn-primary" id="create-order" data-disable-with="Processing...">Create Order</button>
   </form>
 </div>

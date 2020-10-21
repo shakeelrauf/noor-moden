@@ -169,46 +169,50 @@ class ProductsController < ApplicationController
   end
 
   def create_order
-    db_ids = params[:product_db_id]
-    new_qtys = params[:new_qty]
-    totals = params[:subtotal]
-    actual_qtys = params[:actual_qty]
-    order_sum = totals.collect { |total| total.to_f }.sum
-    qty_sum = new_qtys.collect { |qty| qty.to_i }.sum
-    order = Order.create(total: order_sum, order_qty: qty_sum, label: params[:label])
-    line_item_prices = params[:line_item_price]
-    db_ids.zip(new_qtys, totals, actual_qtys, line_item_prices).each do |id, new_qty, total, actual_qty, line_item_price|
-      qty = actual_qty.to_i - new_qty.to_i
-      product = Product.find(id)
-      if product.variant_id.present?
-        result = update_inventory(product.variant_id, qty)
-        if InventorySetting.last.is_syncing == false
+    # Match against session token to prevent double order entry
+    if session[:create_order_random_token] == params[:random_token]
+      session.delete(:create_order_random_token)
+      db_ids = params[:product_db_id]
+      new_qtys = params[:new_qty]
+      totals = params[:subtotal]
+      actual_qtys = params[:actual_qty]
+      order_sum = totals.collect { |total| total.to_f }.sum
+      qty_sum = new_qtys.collect { |qty| qty.to_i }.sum
+      order = Order.create(total: order_sum, order_qty: qty_sum, label: params[:label])
+      line_item_prices = params[:line_item_price]
+      db_ids.zip(new_qtys, totals, actual_qtys, line_item_prices).each do |id, new_qty, total, actual_qty, line_item_price|
+        qty = actual_qty.to_i - new_qty.to_i
+        product = Product.find(id)
+        if product.variant_id.present?
+          result = update_inventory(product.variant_id, qty)
+          if InventorySetting.last.is_syncing == false
+            product.inventory = qty
+            product.save
+          end
+          Lineitem.create(
+            variant_id: product.variant_id,
+            shopify_product_id: product.shopify_product_id,
+            product_id: product.id,
+            order_qty: new_qty,
+            remain_qty: qty,
+            total: total,
+            order_id: order.id,
+            sku: product.model_number,
+            price: line_item_price
+          )
+        else
           product.inventory = qty
           product.save
+          Lineitem.create(
+            product_id: product.id,
+            order_qty: new_qty,
+            remain_qty: qty,
+            total: total,
+            order_id: order.id,
+            sku: product.model_number,
+            price: line_item_price
+          )
         end
-        Lineitem.create(
-          variant_id: product.variant_id,
-          shopify_product_id: product.shopify_product_id,
-          product_id: product.id,
-          order_qty: new_qty,
-          remain_qty: qty,
-          total: total,
-          order_id: order.id,
-          sku: product.model_number,
-          price: line_item_price
-        )
-      else
-        product.inventory = qty
-        product.save
-        Lineitem.create(
-          product_id: product.id,
-          order_qty: new_qty,
-          remain_qty: qty,
-          total: total,
-          order_id: order.id,
-          sku: product.model_number,
-          price: line_item_price
-        )
       end
     end
     redirect_to products_path, notice: 'Your Inventory Has been updated.'
@@ -241,7 +245,7 @@ class ProductsController < ApplicationController
   end
 
   def start_scanning
-
+    session[:create_order_random_token] = SecureRandom.hex
   end
 
   private

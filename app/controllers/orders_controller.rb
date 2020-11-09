@@ -43,6 +43,10 @@ class OrdersController < ApplicationController
   end
 
   def webhook_cancel_order
+    # if we uncheck restock items checkbox when cancelling order from shopify then do not update the inventory
+    if params["refunds"].first[:restock] == false
+      return head 200
+    end
     params["line_items"].each do |line_item|
       product = Product.find_by(variant_id: line_item["variant_id"])
       if product.present?

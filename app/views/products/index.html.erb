@@ -9,7 +9,7 @@
         Products</button>
     </div>
   
-    <div class="col-4">
+    <div class="col-3">
       <form action="/products">
         <div class="form-group">
           <input id="search-autocomplete" type="text" name="query" value="<%= params[:query] %>" class='form-control'
@@ -17,9 +17,9 @@
         </div>
       </form>
     </div>
-    <div class="col-4 flex-div">
+    <div class="col-5 flex-div">
       <div class="select-div-wrapper">
-        <form action="/change_sync" method="post">
+        <form action="/change_sync" method="post"  class="sync-btn-form">
           <label>Syncing</label>
           <%= select_tag :is_syncing, options_for_select(syncing_options, @syncing_status), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary' %>
         </form>
@@ -103,15 +103,22 @@
     justify-content: flex-end;
   }
 
+  .sync-btn-form{
+      display: inline-flex;
+      align-items: center;
+  }
+
+  .select-options{
+      display: inline-block;
+  }
+
   .ui-autocomplete  {
     height: max-content;
     max-height: 50vh;
     overflow-y: scroll;
   }
   .select-div-wrapper label {
-    position: absolute;
-    left: -6px;
-    top: 6px
+    margin-right: 5px;
   }
 </style>
 

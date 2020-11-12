@@ -308,7 +308,7 @@ class ProductsController < ApplicationController
     end
 
     def update_inventory(variant_id, qty)
-      @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2019-07/variants/#{variant_id}.json",
+      @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
         :body => { 
                   "variant": {:id=> variant_id, 
                     :inventory_quantity=> qty,
@@ -319,7 +319,7 @@ class ProductsController < ApplicationController
     end
 
     def update_variant_price(variant_id, qty, price)
-      @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2019-07/variants/#{variant_id}.json",
+      @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
         :body => { 
                   "variant": {:id=> variant_id, 
                     :inventory_quantity=> qty,
@@ -331,7 +331,7 @@ class ProductsController < ApplicationController
     end
 
   def update_customer(customer_id,country)
-    @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2020-10/customers/#{customer_id}.json",
+    @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/customers/#{customer_id}.json",
        :body => {
            "customer": {:id=> customer_id,
                        :tags=> "approved",
@@ -343,7 +343,7 @@ class ProductsController < ApplicationController
   end
 
     def delete_variant(product_id, variant_id)
-      @result = HTTParty.delete("https://noor-moden.myshopify.com/admin/api/2019-07/products/#{product_id}/variants/#{variant_id}.json",
+      @result = HTTParty.delete("#{ENV['SHOPIFY_API_URL']}/products/#{product_id}/variants/#{variant_id}.json",
         :headers => {
           'X-Shopify-Access-Token' => ENV['Access_Token']})
     end

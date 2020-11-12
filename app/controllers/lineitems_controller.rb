@@ -84,7 +84,7 @@ class LineitemsController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
 
     def update_inventory(variant_id, qty)
-      @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2019-07/variants/#{variant_id}.json",
+      @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
         :body => { 
                   "variant": {:id=> variant_id, 
                     :inventory_quantity=> qty,

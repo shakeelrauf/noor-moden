@@ -5,7 +5,7 @@ class WebhookController < ApplicationController
 
 	def get_hook
 		# This token I get from https://noor-moden.myshopify.com/admin/private/apps, password is shopify-acess-token
-		# @result = HTTParty.post("https://noor-moden.myshopify.com/admin/api/2019-07/customers.json",
+		# @result = HTTParty.post("#{ENV['SHOPIFY_API_URL']}/customers.json",
 	 #    :body => { 
   #               "customer": {:first_name=> params["first_name"], 
 	 #    						:last_name=> params["last_name"], 

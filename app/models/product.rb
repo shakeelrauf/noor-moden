@@ -104,7 +104,7 @@ class Product < ApplicationRecord
   end
 
   def self.update_variant_price(variant_id, qty, price)
-    @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2019-07/variants/#{variant_id}.json",
+    @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
       :body => { 
                 "variant": {:id=> variant_id, 
                   :inventory_quantity=> qty,
@@ -116,7 +116,7 @@ class Product < ApplicationRecord
   end
 
   def self.delete_variant(product_id, variant_id)
-      @result = HTTParty.delete("https://noor-moden.myshopify.com/admin/api/2019-07/products/#{product_id}/variants/#{variant_id}.json",
+      @result = HTTParty.delete("#{ENV['SHOPIFY_API_URL']}/products/#{product_id}/variants/#{variant_id}.json",
         :headers => {
           'X-Shopify-Access-Token' => ENV['Access_Token']})
     end

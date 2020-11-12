@@ -24,12 +24,46 @@ class WebhookController < ApplicationController
     else
       render json: { link: "" }
     end
-	end
+  end
+
+  def validate_vat_id
+    render json: { vat_valid: verify_vat}
+  end
 
   private
 
   def get_license_url(file_name)
     "http://" + request.host + "/license_files/" + file_name
+  end
+
+  def verify_vat
+    country_code = params[:vat_id][0..1]
+    vat_id = params[:vat_id][2..params[:vat_id].length]
+    url = "http://ec.europa.eu/taxation_customs/vies/services/checkVatService"
+    uri = URI.parse(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = false
+
+    data = <<-EOF
+    <soapenv:Envelope xmlns:soapenv="http://schemas.xmlsoap.org/soap/envelope/" xmlns:urn="urn:ec.europa.eu:taxud:vies:services:checkVat:types">
+        <soapenv:Header/>
+        <soapenv:Body>
+          <urn:checkVat>
+             <urn:countryCode>#{country_code}</urn:countryCode>
+             <urn:vatNumber>#{vat_id}</urn:vatNumber>
+          </urn:checkVat>
+         </soapenv:Body>
+        </soapenv:Envelope>
+    EOF
+
+    headers = {
+        'Content-Type' => 'text/xml; charset=utf-8'
+    }
+
+    result = http.post(uri.path, data, headers)
+    result.body.include?("<valid>true</valid>")
+  rescue StandardError
+    return false
   end
 
 end

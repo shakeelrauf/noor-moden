@@ -134,6 +134,8 @@ class ProductsController < ApplicationController
   end
 
   def notify_new_customer_shopify_admin
+    country = params[:note].split("\n").select{ |e| e.include? 'country' }.first&.split(":")&.last&.strip
+    update_customer(params[:id],country)
     CustomerMailer.send_shopify_signup_notification(params).deliver_now
   end
 
@@ -327,6 +329,18 @@ class ProductsController < ApplicationController
         :headers => {
           'X-Shopify-Access-Token' => ENV['Access_Token']})
     end
+
+  def update_customer(customer_id,country)
+    @result = HTTParty.put("https://noor-moden.myshopify.com/admin/api/2020-10/customers/#{customer_id}.json",
+       :body => {
+           "customer": {:id=> customer_id,
+                       :tags=> "approved",
+                        :tax_exempt=> country.downcase != "germany"
+           }
+       },
+       :headers => {
+           'X-Shopify-Access-Token' => ENV['Access_Token']})
+  end
 
     def delete_variant(product_id, variant_id)
       @result = HTTParty.delete("https://noor-moden.myshopify.com/admin/api/2019-07/products/#{product_id}/variants/#{variant_id}.json",

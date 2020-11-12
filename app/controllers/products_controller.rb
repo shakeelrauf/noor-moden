@@ -135,7 +135,8 @@ class ProductsController < ApplicationController
 
   def notify_new_customer_shopify_admin
     country = params[:note].split("\n").select{ |e| e.include? 'country' }.first&.split(":")&.last&.strip
-    update_customer(params[:id],country)
+    accept_marketing = params[:note].split("\n").select{ |e| e.include? 'register_newsletter' }.first&.split(":")&.last&.strip == "true"
+    update_customer(params[:id],country,accept_marketing)
     CustomerMailer.send_shopify_signup_notification(params).deliver_now
   end
 
@@ -330,12 +331,13 @@ class ProductsController < ApplicationController
           'X-Shopify-Access-Token' => ENV['Access_Token']})
     end
 
-  def update_customer(customer_id,country)
+  def update_customer(customer_id,country,accepts_marketing)
     @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/customers/#{customer_id}.json",
        :body => {
            "customer": {:id=> customer_id,
                        :tags=> "approved",
-                        :tax_exempt=> country.downcase != "germany"
+                        :tax_exempt=> country.downcase != "germany",
+                        :accepts_marketing => accepts_marketing
            }
        },
        :headers => {

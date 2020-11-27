@@ -332,10 +332,13 @@ class ProductsController < ApplicationController
     end
 
   def update_customer(customer_id,country,accepts_marketing)
+    tags = ["approved"]
+    country.downcase == "germany" ? tags.push("de") : tags.push("en")
+
     @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/customers/#{customer_id}.json",
        :body => {
            "customer": {:id=> customer_id,
-                       :tags=> "approved",
+                       :tags=> tags.join(","),
                         :tax_exempt=> country.downcase != "germany",
                         :accepts_marketing => accepts_marketing
            }

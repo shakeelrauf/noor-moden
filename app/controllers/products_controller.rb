@@ -1,7 +1,7 @@
 class ProductsController < ApplicationController
   before_action :set_product, only: [:show, :edit, :update, :destroy]
   skip_before_action :verify_authenticity_token
-  skip_before_action :authenticate_user!, only: [:update_shopify_product, :create_product, :delete_product, :notify_new_customer_shopify_admin]
+  skip_before_action :authenticate_user!, only: [:update_shopify_product, :create_product, :delete_product, :notify_new_customer_shopify_admin, :notify_update_customer_shopify_admin]
 
   require 'barby/barcode/code_128'
   require 'barby/outputter/ascii_outputter'
@@ -138,6 +138,11 @@ class ProductsController < ApplicationController
     accept_marketing = params[:note].split("\n").select{ |e| e.include? 'register_newsletter' }.first&.split(":")&.last&.strip == "true"
     update_customer(params[:id],country,accept_marketing)
     CustomerMailer.send_shopify_signup_notification(params).deliver_now
+  end
+
+  def notify_update_customer_shopify_admin
+    country = params[:note].split("\n").select{ |e| e.include? 'country' }.first&.split(":")&.last&.strip
+    update_customer(params[:id],country,params["accepts_marketing"])
   end
 
   # DELETE /products/1
@@ -333,12 +338,13 @@ class ProductsController < ApplicationController
 
   def update_customer(customer_id,country,accepts_marketing)
     tags = ["approved"]
-    country.downcase == "germany" ? tags.push("de") : tags.push("en")
+    german_countries = %w(austria belgium germany liechtenstein luxembourg switzerland)
+    german_countries.include?(country.downcase) ? tags.push("de") : tags.push("en")
 
     @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/customers/#{customer_id}.json",
        :body => {
            "customer": {:id=> customer_id,
-                       :tags=> tags.join(","),
+                       :tags=> tags.uniq.join(","),
                         :tax_exempt=> country.downcase != "germany",
                         :accepts_marketing => accepts_marketing
            }

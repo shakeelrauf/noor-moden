@@ -19,6 +19,7 @@ Rails.application.routes.draw do
   post 'webhook/create_order' => 'orders#webhook_create_order'
   post 'webhook/cancel_order' => 'orders#webhook_cancel_order'
   post 'webhook/notify_new_customer_shopify_admin' => 'products#notify_new_customer_shopify_admin'
+  post 'webhook/notify_update_customer_shopify_admin' => 'products#notify_update_customer_shopify_admin'
   post 'webhook/validate_vat_id' => 'webhook#validate_vat_id'
   post '/change_sync' => 'products#change_sync'
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html

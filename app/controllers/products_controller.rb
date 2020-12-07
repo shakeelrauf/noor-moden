@@ -143,6 +143,7 @@ class ProductsController < ApplicationController
   def notify_update_customer_shopify_admin
     country = params[:note].split("\n").select{ |e| e.include? 'country' }.first&.split(":")&.last&.strip
     update_customer(params[:id],country,params["accepts_marketing"])
+    head 200
   end
 
   # DELETE /products/1

@@ -1,8 +1,9 @@
 class OrdersController < ApplicationController
+
   before_action :set_order, only: [:show, :edit, :update, :destroy]
   skip_before_action :verify_authenticity_token, only: %i[webhook_create_order webhook_cancel_order]
   skip_before_action :authenticate_user!, only: %i[webhook_create_order webhook_cancel_order]
-
+  include ApiCalls
   # GET /orders
   # GET /orders.json
   def index
@@ -147,56 +148,4 @@ class OrdersController < ApplicationController
       params.require(:order).permit(:variant_id, :product_id, :order_qty, :remain_qty, :total)
     end
 
-    def update_inventory(variant_id, qty)
-      inventory_levels = get_variant(variant_id)
-      if inventory_levels.code == 200
-        inventory_item_id = inventory_levels.parsed_response["variant"]["inventory_item_id"]
-        inventory_levels = HTTParty.get("#{ENV['SHOPIFY_API_URL']}/inventory_levels.json",
-          :query => {
-                      "inventory_item_ids": inventory_item_id,
-                    },
-          :headers => {
-            'X-Shopify-Access-Token' => ENV['Access_Token']})
-        if inventory_levels.code == 200 && inventory_levels.parsed_response["inventory_levels"].count > 0
-          adjust_items = inventory_levels.parsed_response["inventory_levels"].first
-          set_inventory_levels_qty = HTTParty.post("#{ENV['SHOPIFY_API_URL']}/inventory_levels/set.json",
-          :body => {
-            "location_id": adjust_items["location_id"],
-            "inventory_item_id": adjust_items["inventory_item_id"],
-            "available": qty,
-          },
-          :headers => {
-            'X-Shopify-Access-Token' => ENV['Access_Token']})
-        end
-      end
-    end
-
-
-    # def puts_input
-    #   puts "Enter input"
-    #   get_input = gets.chomp
-    #   get_input = get_input.to_s
-    #   p1,p2,p3 = "", "", ""
-    #   values_array = get_input.split('')
-    #   values_array.each do |value|
-    #     if value == values_array[0]
-    #       p1 += " --- "
-    #       p2 += "| #{value} |"
-    #       p3 += " === "
-    #     else
-    #       p1 += "  --- "
-    #       p2 += "*| #{value} |"
-    #       p3 += "  === "
-    #     end
-    #   end
-    #   puts p1
-    #   puts p2
-    #   puts p3
-    #   puts_input
-    # end
-  def get_variant(variant_id)
-    inventory_levels = HTTParty.get("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
-      :headers => {
-        'X-Shopify-Access-Token' => ENV['Access_Token']})
-  end
 end

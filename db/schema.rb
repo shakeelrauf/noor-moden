@@ -69,7 +69,6 @@ ActiveRecord::Schema.define(version: 2020_03_06_121709) do
     t.string "sku"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
-    t.text "label"
     t.index ["order_id"], name: "index_lineitems_on_order_id"
   end
 

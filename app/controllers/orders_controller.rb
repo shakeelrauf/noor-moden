@@ -1,8 +1,9 @@
 class OrdersController < ApplicationController
+
   before_action :set_order, only: [:show, :edit, :update, :destroy]
   skip_before_action :verify_authenticity_token, only: %i[webhook_create_order webhook_cancel_order]
   skip_before_action :authenticate_user!, only: %i[webhook_create_order webhook_cancel_order]
-
+  include ApiCalls
   # GET /orders
   # GET /orders.json
   def index
@@ -146,39 +147,5 @@ class OrdersController < ApplicationController
     def order_params
       params.require(:order).permit(:variant_id, :product_id, :order_qty, :remain_qty, :total)
     end
-
-    def update_inventory(variant_id, qty)
-      @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
-        :body => {
-                  "variant": {:id=> variant_id,
-                    :inventory_quantity=> qty,
-                  }
-               },
-        :headers => {
-          'X-Shopify-Access-Token' => ENV['Access_Token']})
-    end
-
-    # def puts_input
-    #   puts "Enter input"
-    #   get_input = gets.chomp
-    #   get_input = get_input.to_s
-    #   p1,p2,p3 = "", "", ""
-    #   values_array = get_input.split('')
-    #   values_array.each do |value|
-    #     if value == values_array[0]
-    #       p1 += " --- "
-    #       p2 += "| #{value} |"
-    #       p3 += " === "
-    #     else
-    #       p1 += "  --- "
-    #       p2 += "*| #{value} |"
-    #       p3 += "  === "
-    #     end
-    #   end
-    #   puts p1
-    #   puts p2
-    #   puts p3
-    #   puts_input
-    # end
 
 end

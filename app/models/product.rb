@@ -104,6 +104,7 @@ class Product < ApplicationRecord
   end
 
   def self.update_variant_price(variant_id, qty, price)
+    
     @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
       :body => { 
                 "variant": {:id=> variant_id, 

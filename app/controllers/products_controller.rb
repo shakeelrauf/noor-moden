@@ -7,7 +7,7 @@ class ProductsController < ApplicationController
   require 'barby/outputter/ascii_outputter'
   require 'barby/outputter/png_outputter'
   require 'barby/outputter/svg_outputter'
-
+  include ApiCalls
   # GET /products
   # GET /products.json
   def index
@@ -179,6 +179,7 @@ class ProductsController < ApplicationController
 
   def create_order
     # Match against session token to prevent double order entry
+    
     if session[:create_order_random_token] == params[:random_token]
       session.delete(:create_order_random_token)
       db_ids = params[:product_db_id]
@@ -223,34 +224,9 @@ class ProductsController < ApplicationController
           )
         end
       end
+      
     end
     redirect_to products_path, notice: 'Your Inventory Has been updated.'
-
-    # qty = params["actual_qty"].to_i - params["new_qty"].to_i
-    # if params[:variant_id].present?
-    #   result = update_inventory(params[:variant_id], qty)
-    #   Order.create(
-    #     variant_id: params[:variant_id],
-    #     product_id: params[:product_id],
-    #     order_qty: params[:new_qty],
-    #     remain_qty: qty,
-    #     total: params[:subtotal]
-    #   )
-    #   redirect_to products_path, notice: 'Your Inventory Has been updated.'
-    #   # render json: { status: result.code }
-    # else
-    #   product = Product.find(params[:product_db_id])
-    #   product.inventory = qty
-    #   product.save
-    #   Order.create(
-    #     order_qty: params[:new_qty],
-    #     remain_qty: qty,
-    #     total: params[:subtotal]
-    #   )
-    #   redirect_to products_path, notice: 'Your Inventory Has been updated.'
-    #   # render json: { status: 200 }
-    # end
-
   end
 
   def start_scanning
@@ -262,9 +238,6 @@ class ProductsController < ApplicationController
     # Use callbacks to share common setup or constraints between actions.
     def sync_shopify_data
       params[:variants].each do |variant|
-        # product_present = Product.where(variant_id: variant['id']).first
-        # product_present = Product.where(model_number: variant['sku']).first
-        # product_present = Product.where(model_number: variant['sku']).or(Product.where(variant_id: variant['id'])).where.not(model_number: "").first
         product_present = Product.where(model_number: variant['sku']).where.not(model_number: "").first
         if !product_present.present?
           if variant['sku'].present?
@@ -314,49 +287,4 @@ class ProductsController < ApplicationController
       params.require(:product).permit(:shopify_product_id, :inventory, :barcode, :price, :variant_id, :model_number, :sync_with_modiprofi)
     end
 
-    def update_inventory(variant_id, qty)
-      @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
-        :body => { 
-                  "variant": {:id=> variant_id, 
-                    :inventory_quantity=> qty,
-                  }
-               },
-        :headers => {
-          'X-Shopify-Access-Token' => ENV['Access_Token']})
-    end
-
-    def update_variant_price(variant_id, qty, price)
-      @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
-        :body => { 
-                  "variant": {:id=> variant_id, 
-                    :inventory_quantity=> qty,
-                    :price => price
-                  }
-               },
-        :headers => {
-          'X-Shopify-Access-Token' => ENV['Access_Token']})
-    end
-
-  def update_customer(customer_id,country,accepts_marketing)
-    tags = ["approved"]
-    german_countries = %w(austria belgium germany liechtenstein luxembourg switzerland)
-    german_countries.include?(country.downcase) ? tags.push("de") : tags.push("en")
-
-    @result = HTTParty.put("#{ENV['SHOPIFY_API_URL']}/customers/#{customer_id}.json",
-       :body => {
-           "customer": {:id=> customer_id,
-                       :tags=> tags.uniq.join(","),
-                        :tax_exempt=> country.downcase != "germany",
-                        :accepts_marketing => accepts_marketing
-           }
-       },
-       :headers => {
-           'X-Shopify-Access-Token' => ENV['Access_Token']})
-  end
-
-    def delete_variant(product_id, variant_id)
-      @result = HTTParty.delete("#{ENV['SHOPIFY_API_URL']}/products/#{product_id}/variants/#{variant_id}.json",
-        :headers => {
-          'X-Shopify-Access-Token' => ENV['Access_Token']})
-    end
 end

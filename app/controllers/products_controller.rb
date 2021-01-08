@@ -311,7 +311,7 @@ class ProductsController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def product_params
-      params.require(:product).permit(:shopify_product_id, :inventory, :barcode, :price, :variant_id, :model_number)
+      params.require(:product).permit(:shopify_product_id, :inventory, :barcode, :price, :variant_id, :model_number, :sync_with_modiprofi)
     end
 
     def update_inventory(variant_id, qty)

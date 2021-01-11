@@ -96,6 +96,14 @@ class ProductsController < ApplicationController
     end
   end
 
+  def update_sync_with_modeprofi
+    @product = Product.find_by_id(params[:product_id])
+    @product.update(sync_with_modeprofi: params[:sync_with_modeprofi])
+    respond_to do |format|
+      format.js { render :updated_sync_with_modeprofi }
+    end  
+  end
+
   def export
     ProductsImportExportJob.perform_later('export');
     redirect_to products_path, notice: "Exporting Products..."
@@ -284,7 +292,7 @@ class ProductsController < ApplicationController
 
     # Never trust parameters from the scary internet, only allow the white list through.
     def product_params
-      params.require(:product).permit(:shopify_product_id, :inventory, :barcode, :price, :variant_id, :model_number, :sync_with_modiprofi)
+      params.require(:product).permit(:shopify_product_id, :inventory,:modeprofi_inventory, :barcode, :price, :variant_id, :model_number, :sync_with_modeprofi)
     end
 
 end

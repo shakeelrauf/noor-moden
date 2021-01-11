@@ -45,6 +45,7 @@
         <th>Shopify product Id</th>
         <th>Shopify Variant Id</th>
         <th>Inventory</th>
+        <th>ModeProfi Inventory</th>
         <th>Barcode</th>
         <th>Price</th>
         <th colspan="3"></th>
@@ -58,13 +59,23 @@
         <td><%= product.shopify_product_id %></td>
         <td><%= product.variant_id %></td>
         <td><%= product.inventory %></td>
+        <td><%= product.modeprofi_inventory %></td>
         <td>
           <%= product.barcode.to_s.html_safe %>
           <br />
           <span>000<%= product.id %></span>
         </td>
         <td><%= product.price %></td>
-        <td><%= link_to 'Show', product %></td>
+        <td>
+          <div class="d-flex justify-content-center"> 
+            <%= select_tag :sync_with_modeprofi, options_for_select(modeprofi_options, product.sync_with_modeprofi),data: {
+                remote: true,
+                url: product_update_sync_with_modeprofi_path(product.id),
+                method: 'PUT',
+              }, class: 'btn-primary mr-2' %>
+            <%= link_to 'Show', product%>
+          </div>  
+        </td>
         <td><%= link_to 'Edit', edit_product_path(product) %></td>
         <% if current_user.role == "admin" %>
         <td><%= link_to 'Destroy', product, method: :delete, data: { confirm: 'Are you sure?' } %></td>

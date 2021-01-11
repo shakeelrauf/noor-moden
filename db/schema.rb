@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_08_092437) do
+ActiveRecord::Schema.define(version: 2021_01_11_122432) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -93,7 +93,8 @@ ActiveRecord::Schema.define(version: 2021_01_08_092437) do
     t.datetime "updated_at", null: false
     t.bigint "variant_id"
     t.string "model_number"
-    t.boolean "sync_with_modiprofi", default: true
+    t.boolean "sync_with_modeprofi", default: true
+    t.integer "modeprofi_inventory"
   end
 
   create_table "shops", force: :cascade do |t|

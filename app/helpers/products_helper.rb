@@ -6,4 +6,8 @@ module ProductsHelper
     def syncing_options
     	[['On', 'true'],['Off', 'false']]
     end
+
+    def modeprofi_options
+    	[['Modeprofi On', 'true'],['Modeprofi Off', 'false']]
+    end
 end

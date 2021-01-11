@@ -9,6 +9,7 @@ Rails.application.routes.draw do
     get :start_scanning, on: :collection
     get :export, on: :collection
     post :import, on: :collection
+    put :update_sync_with_modeprofi
   end
   root :to => 'products#index'
   mount ShopifyApp::Engine, at: '/'

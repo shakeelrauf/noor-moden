@@ -20,9 +20,8 @@
                                     <input type="text" style="display:none" value="<%= id = order.id%>">
                                     <input type="number" style="display:none" name="previous_quantity[]" value="<%= item.order_qty%>">
                                     <input type="number" style="display:none" name="actual_quantities_update[]" value="<%= item.remain_qty%>">
-
                                     <hr/>
-                                 </div>   
+                                </div>   
                             </div>
                         <%end%>
                     <table class="table">
@@ -51,7 +50,6 @@
 $('#reservation_expiry_date').datepicker('setStartDate', new Date());
 </script>
 <script>
-///////////////
 $("#manual-sku-code").on('keyup', function (e) {
       if (e.keyCode === 13) {
         $("#manual-entry").trigger('click');
@@ -193,11 +191,6 @@ function remove_existing(elmnt){
       source: '/modelnumbers'
     })
   }); 
-
-
-///////////////
-
-
 </script>
 
 <style>
@@ -207,17 +200,10 @@ function remove_existing(elmnt){
     width: 25%;
 }
 .outer-div{
-    /* border: 1px solid whitesmoke; */
     width:100%;
-    /* padding:10px; */
 }
 .main-div{
     margin:20px;
-    /* background-color:whitesmoke; */
-}
-.sku-style{
-    /* background-color: #c5dbcc; */
-    /* margin-top:10px */
 }
 .expiry-date-style{
     margin-left:3.2%;

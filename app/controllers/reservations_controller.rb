@@ -26,7 +26,6 @@ class ReservationsController < ApplicationController
 
   def create
     @order = Order.new(order_params)
-
     respond_to do |format|
       if @order.save
         format.html { redirect_to @order, notice: 'Order was successfully created.' }
@@ -43,33 +42,14 @@ class ReservationsController < ApplicationController
     if order.lineitems.count > 0
         quantity = []
         price = []
+        qty = 0
         order.lineitems.each.with_index do |item,index|
             variant =  Product.find_by(variant_id: item.variant_id)
-            actual_qty = variant.inventory
-            if params[:new_qty][index].to_i < item.order_qty.to_i       #calculating quatity for existing lineitems
-                value = item.order_qty.to_i - params[:new_qty][index].to_i
-                qty = actual_qty.to_i + value
-                puts("*******less with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*******")
-            elsif params[:new_qty][index].to_i > item.order_qty.to_i
-                value =  params[:new_qty][index].to_i - item.order_qty.to_i 
-                qty = actual_qty.to_i - value
-                puts("*******greater with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*****")
-            else
-                qty = actual_qty.to_i
-            end
-            result = update_inventory(item.variant_id, qty)
+            qty = calculate_item_update_qty(index,variant,item,qty) #calculate final quantity
+            result = update_inventory(item.variant_id, qty) #updating shopify inventory
             variant.inventory = qty
             variant.save
-            if params[:new_qty][index].to_i == 0            #Destroy Else Update
-                puts("**********DESTROYED*******variant_id******#{item.variant_id}*********")
-                item.destroy
-            else
-                puts("*******Update********")
-                pricing =  params[:price][index]
-                item.order_qty = params[:new_qty][index].dup
-                item.price = pricing
-                item.save 
-            end
+            destroy_else_update_item(item,index)   #delete selected items or update previous items
             quantity << params[:new_qty][index].to_i   
             price << params[:price][index].to_f * params[:new_qty][index].to_f 
             new_qty = params[:new_qty][index].to_i
@@ -77,24 +57,8 @@ class ReservationsController < ApplicationController
         if params["product_db_id"].present?
             if params["product_db_id"].length > 0
                 params["product_db_id"].each.with_index do |new_item,index| 
-                    variant_id_new = params["variant_new_id"][index].to_i
-                    model = Product.find_by(variant_id: variant_id_new)
-                    remaining_qty = model.inventory.to_i - params["new_input_qty"][index].to_i
-                    result = update_inventory(variant_id_new, remaining_qty)
-                    model.inventory = remaining_qty
-                    model.save
-                    puts("*****model_inventory:#{model.inventory }*******remaining quantity: #{remaining_qty}*******")
-                    create_lineitem =  Lineitem.create(
-                        variant_id: variant_id_new,
-                        shopify_product_id: params["product_id"][index].to_i,
-                        product_id: params["product_db_id"][index].to_i,
-                        order_qty: params["new_input_qty"][index].to_i,
-                        remain_qty: remaining_qty,
-                        total: params["subtotal"][index].to_f,
-                        order_id: order.id,
-                        sku: model.model_number,
-                        price: params["line_item_price"][index].to_f
-                    )
+                    order_id = order.id
+                    create_lineitem_and_update_inventories(index,order_id)
                     price << params["line_item_price"][index].to_f * params["new_input_qty"][index].to_f
                     quantity << params["new_input_qty"][index].to_i
                 end
@@ -129,14 +93,14 @@ class ReservationsController < ApplicationController
       format.json { head :no_content }
     end
   end
+
   def approve_reservation
     @order = Order.find(params["format"].to_i)
     @order.reserve_status = false
     @order.save
     redirect_to reservations_url , notice: 'Order status is updated.'  
   end
-  
-  
+ 
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_order
@@ -172,9 +136,55 @@ class ReservationsController < ApplicationController
     end
 
   def get_variant(variant_id)
-    
     inventory_levels = HTTParty.get("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
       :headers => {
         'X-Shopify-Access-Token' => ENV['Access_Token']})
   end
+  def destroy_else_update_item(item,index)
+    if params[:new_qty][index].to_i == 0            #Destroy Else Update
+        puts("**********DESTROYED**#{index}*****variant_id******#{item.variant_id}*********")
+        item.destroy
+    else
+        puts("*******Update********")
+        pricing =  params[:price][index]
+        item.order_qty = params[:new_qty][index].dup
+        item.price = pricing
+        item.save 
+    end
+  end
+  def calculate_item_update_qty(index,variant,item,qty)
+        actual_qty = variant.inventory
+        if params[:new_qty][index].to_i < item.order_qty.to_i       #calculating quatity for existing lineitems
+            value = item.order_qty.to_i - params[:new_qty][index].to_i
+            qty = actual_qty.to_i + value
+            puts("*******less with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*******")
+        elsif params[:new_qty][index].to_i > item.order_qty.to_i
+            value =  params[:new_qty][index].to_i - item.order_qty.to_i 
+            qty = actual_qty.to_i - value
+            puts("*******greater with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*****")
+        else
+            qty = actual_qty.to_i
+        end
+        return qty
+  end
+  def create_lineitem_and_update_inventories(index,order_id)
+        variant_id_new = params["variant_new_id"][index].to_i
+        model = Product.find_by(variant_id: variant_id_new)
+        remaining_qty = model.inventory.to_i - params["new_input_qty"][index].to_i
+        result = update_inventory(variant_id_new, remaining_qty)
+        model.inventory = remaining_qty
+        model.save
+        puts("*****model_inventory:#{model.inventory }*******remaining quantity: #{remaining_qty}*******")
+        create_lineitem =  Lineitem.create(
+            variant_id: variant_id_new,
+            shopify_product_id: params["product_id"][index].to_i,
+            product_id: params["product_db_id"][index].to_i,
+            order_qty: params["new_input_qty"][index].to_i,
+            remain_qty: remaining_qty,
+            total: params["subtotal"][index].to_f,
+            order_id: order_id,
+            sku: model.model_number,
+            price: params["line_item_price"][index].to_f
+        )
+    end
 end

@@ -48,7 +48,8 @@
         <th>ModeProfi Inventory</th>
         <th>Barcode</th>
         <th>Price</th>
-        <th colspan="3"></th>
+        <th>sync</th>
+        <th colspan="2"></th>
       </tr>
     </thead>
 
@@ -67,12 +68,17 @@
         </td>
         <td><%= product.price %></td>
         <td>
-          <div class="d-flex justify-content-center"> 
-            <%= select_tag :sync_with_modeprofi, options_for_select(modeprofi_options, product.sync_with_modeprofi),data: {
+          <div class="switchToggle">
+            <%= check_box_tag :sync_with_modeprofi, true, product.sync_with_modeprofi, data: {
                 remote: true,
                 url: product_update_sync_with_modeprofi_path(product.id),
                 method: 'PUT',
-              }, class: 'btn-primary mr-2' %>
+              }, id: "switch#{product.id}"%>
+            <label for="switch<%= product.id %>">Toggle</label>
+          </div>
+        </td>
+        <td>
+          <div class="d-flex justify-content-center"> 
             <%= link_to 'Show', product%>
           </div>  
         </td>

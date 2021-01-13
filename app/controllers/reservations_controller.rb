@@ -3,6 +3,8 @@ class ReservationsController < ApplicationController
   skip_before_action :verify_authenticity_token, only: %i[webhook_create_order webhook_cancel_order]
   skip_before_action :authenticate_user!, only: %i[webhook_create_order webhook_cancel_order]
 
+  include ApiCalls
+
   def index
     if params[:query].present?
       @orders = Order.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 50)
@@ -74,17 +76,6 @@ class ReservationsController < ApplicationController
     end
     redirect_to reservations_path , notice: "Reservation Updated Successfully."
  end
-#   def update
-#     respond_to do |format|
-#       if @order.update(order_params)
-#         format.html { redirect_to @order, notice: 'Reservation was successfully updated.' }
-#         format.json { render :show, status: :ok, location: @order }
-#       else
-#         format.html { render :edit }
-#         format.json { render json: @order.errors, status: :unprocessable_entity }
-#       end
-#     end
-#   end
 
   def destroy
     @order.destroy
@@ -111,80 +102,53 @@ class ReservationsController < ApplicationController
       params.require(:order).permit(:variant_id, :product_id, :order_qty, :remain_qty, :total)
     end
 
-    def update_inventory(variant_id, qty)
-      inventory_levels = get_variant(variant_id)
-      if inventory_levels.code == 200
-        inventory_item_id = inventory_levels.parsed_response["variant"]["inventory_item_id"]
-        inventory_levels = HTTParty.get("#{ENV['SHOPIFY_API_URL']}/inventory_levels.json",
-          :query => {
-                      "inventory_item_ids": inventory_item_id,
-                    },
-          :headers => {
-            'X-Shopify-Access-Token' => ENV['Access_Token']})
-        if inventory_levels.code == 200 && inventory_levels.parsed_response["inventory_levels"].count > 0
-          adjust_items = inventory_levels.parsed_response["inventory_levels"].first
-          set_inventory_levels_qty = HTTParty.post("#{ENV['SHOPIFY_API_URL']}/inventory_levels/set.json",
-          :body => {
-            "location_id": adjust_items["location_id"],
-            "inventory_item_id": adjust_items["inventory_item_id"],
-            "available": qty,
-          },
-          :headers => {
-            'X-Shopify-Access-Token' => ENV['Access_Token']})
-        end
+    def destroy_else_update_item(item,index)
+      if params[:new_qty][index].to_i == 0            #Destroy Else Update
+          puts("**********DESTROYED**#{index}*****variant_id******#{item.variant_id}*********")
+          item.destroy
+      else
+          puts("*******Update********")
+          pricing =  params[:price][index]
+          item.order_qty = params[:new_qty][index].dup
+          item.price = pricing
+          item.save
       end
     end
 
-  def get_variant(variant_id)
-    inventory_levels = HTTParty.get("#{ENV['SHOPIFY_API_URL']}/variants/#{variant_id}.json",
-      :headers => {
-        'X-Shopify-Access-Token' => ENV['Access_Token']})
-  end
-  def destroy_else_update_item(item,index)
-    if params[:new_qty][index].to_i == 0            #Destroy Else Update
-        puts("**********DESTROYED**#{index}*****variant_id******#{item.variant_id}*********")
-        item.destroy
-    else
-        puts("*******Update********")
-        pricing =  params[:price][index]
-        item.order_qty = params[:new_qty][index].dup
-        item.price = pricing
-        item.save 
+    def calculate_item_update_qty(index,variant,item,qty)
+      actual_qty = variant.inventory
+      qty = actual_qty.to_i
+      if params[:new_qty][index].to_i < item.order_qty.to_i       #calculating quatity for existing lineitems
+          value = item.order_qty.to_i - params[:new_qty][index].to_i
+          qty = actual_qty.to_i + value
+          puts("*******less with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*******")
+      elsif params[:new_qty][index].to_i > item.order_qty.to_i
+          value =  params[:new_qty][index].to_i - item.order_qty.to_i
+          qty = actual_qty.to_i - value
+          puts("*******greater with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*****")
+      end
+      return qty
     end
-  end
-  def calculate_item_update_qty(index,variant,item,qty)
-        actual_qty = variant.inventory
-        if params[:new_qty][index].to_i < item.order_qty.to_i       #calculating quatity for existing lineitems
-            value = item.order_qty.to_i - params[:new_qty][index].to_i
-            qty = actual_qty.to_i + value
-            puts("*******less with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*******")
-        elsif params[:new_qty][index].to_i > item.order_qty.to_i
-            value =  params[:new_qty][index].to_i - item.order_qty.to_i 
-            qty = actual_qty.to_i - value
-            puts("*******greater with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*****")
-        else
-            qty = actual_qty.to_i
-        end
-        return qty
-  end
-  def create_lineitem_and_update_inventories(index,order_id)
-        variant_id_new = params["variant_new_id"][index].to_i
-        model = Product.find_by(variant_id: variant_id_new)
-        remaining_qty = model.inventory.to_i - params["new_input_qty"][index].to_i
-        result = update_inventory(variant_id_new, remaining_qty)
-        model.inventory = remaining_qty
-        model.save
-        puts("*****model_inventory:#{model.inventory }*******remaining quantity: #{remaining_qty}*******")
-        create_lineitem =  Lineitem.create(
-            variant_id: variant_id_new,
-            shopify_product_id: params["product_id"][index].to_i,
-            product_id: params["product_db_id"][index].to_i,
-            order_qty: params["new_input_qty"][index].to_i,
-            remain_qty: remaining_qty,
-            total: params["subtotal"][index].to_f,
-            order_id: order_id,
-            sku: model.model_number,
-            price: params["line_item_price"][index].to_f
-        )
+
+    def create_lineitem_and_update_inventories(index,order_id)
+      variant_id_new = params["variant_new_id"][index].to_i
+      model = Product.find_by(variant_id: variant_id_new)
+      remaining_qty = model.inventory.to_i - params["new_input_qty"][index].to_i
+      result = update_inventory(variant_id_new, remaining_qty)
+      model.inventory = remaining_qty
+      model.save
+      puts("*****model_inventory:#{model.inventory }*******remaining quantity: #{remaining_qty}*******")
+      create_lineitem =  Lineitem.create(
+          variant_id: variant_id_new,
+          shopify_product_id: params["product_id"][index].to_i,
+          product_id: params["product_db_id"][index].to_i,
+          order_qty: params["new_input_qty"][index].to_i,
+          remain_qty: remaining_qty,
+          total: params["subtotal"][index].to_f,
+          order_id: order_id,
+          sku: model.model_number,
+          price: params["line_item_price"][index].to_f
+      )
     end
+
 end

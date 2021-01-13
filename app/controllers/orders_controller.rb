@@ -72,7 +72,15 @@ class OrdersController < ApplicationController
     end
     order.status = "Canceled"
     order.save
-    redirect_to orders_path, notice: "Order Updated successfully"
+    if params["param1"].present?
+      if params["param1"] == "reservation"
+        redirect_to reservations_path, notice: "Reservation Updated successfully"
+      else
+        redirect_to orders_path, notice: "Order Updated successfully"
+      end
+    else
+      redirect_to orders_path, notice: "Order Updated successfully"
+    end
   end
 
   def print_order
@@ -116,6 +124,7 @@ class OrdersController < ApplicationController
   # PATCH/PUT /orders/1
   # PATCH/PUT /orders/1.json
   def update
+    
     respond_to do |format|
       if @order.update(order_params)
         format.html { redirect_to @order, notice: 'Order was successfully updated.' }

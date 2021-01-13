@@ -4,45 +4,66 @@
   <div id='barcode-scanner'></div>
   <button class="btn btn-primary" id="scan-more-item">Resfesh Scanner</button>
   <br>
+  <hr>
   <br>
+  <input type="radio" class="check_radio_status" id="order" name="order" value="order" checked>
+  <label for="order">Order</label>
+  <input type="radio" class="check_radio_status" id="reservation" name="order" value="reservation">
+  <label for="reservation">Reservation</label><br><br>
+
 
   <div class="manual-entry-row">
+   
     <div>
       <input type="text" name="" placeholder="Enter SKU" id="manual-sku-code"><button id="manual-entry" style="margin-bottom: 4px;margin-left: 4px;" class="btn btn-primary btn-sm">Manual Entry</button>
     </div>
+    <div style="margin-left:17%">
+      <select name="paid_type" id="paid_type" class="form-control" style="height: 31px;">
+        <option value="Cash (Black Sale)">Cash (Black Sale)</option>
+        <option value="Invoice Cash (white sale)">Invoice Cash (white sale)</option>
+        <option value="Invoice Card (white sale)">Invoice Card (white sale)</option>
+      </select>
+    </div>
+     <div style="margin-left:1%">
+        <input type="text" id="" class="pick_value_date"   data-provide='datepicker' placeholder="Set Reservation Expiry Date"  >
+    </div>
+    
     <div>
       <input class="order-name" type="text" placeholder="Enter Order Name">
     </div>
   </div>
-  <form id="order-form" action="/products/create_order" method="get">
-    <table class="table">
-      <thead>
-        <tr>
-          <td>SKU</td>
-          <td>Quantity</td>
-          <td>Price</td>
-          <td>Total</td>
-          <td></td>
-        </tr>
-      </thead>
-      <tbody id="scanned-item-body">
-      </tbody>
-    </table>
-    <strong>
-      <span style="float: right;margin-right: 4%;" id="rows_subtotal">Subtotal: <b></b></span>
+    <form  id="order-form" action="/products/create_order" method="get">
+      <table class="table">
+        <thead>
+          <tr>
+            <td>SKU</td>
+            <td>Quantity</td>
+            <td>Price</td>
+            <td>Total</td>
+            <td></td>
+          </tr>
+        </thead>
+        <tbody id="scanned-item-body">
+        
+        </tbody>
+      </table>
+      <strong>
+        <span style="float: right;margin-right: 4%;" id="rows_subtotal">Subtotal: <b></b></span>
+        <br>
+        <span style="float: right;margin-right: 4%;" id="rows_subquantity">Total Quantity: <b></b></span>
+      </strong>
       <br>
-      <span style="float: right;margin-right: 4%;" id="rows_subquantity">Total Quantity: <b></b></span>
-    </strong>
-    <br>
-    <br>
-    <input style="display: none" class="order-name-input" type="text" name="label" placeholder="Enter Order Name">
-    <%= hidden_field_tag "random_token", session[:create_order_random_token] %>
-    <button type="submit" class="btn btn-primary" id="create-order" data-disable-with="Processing...">Create Order</button>
-  </form>
+      <br>
+      <input type="text" style="display:none;" name="paidtype" id="paidtype">
+      <%= check_box :reserve_status,false%> 
+      <input type="text" style="display: none;"  id="reservation_expiry_date"  name="reservation_expiry_date[]" data-provide='datepicker' placeholder="Set Reservation Expiry Date" >
+      <input style="display: none;" class="order-name-input" type="text" name="label" placeholder="Enter Order Name">      
+      <%= hidden_field_tag "random_token", session[:create_order_random_token] %>
+      <button type="submit" class="btn btn-primary" id="create-order" data-disable-with="Processing...">Submit</button>
+    </form> 
 </div>
 
 <script type="text/javascript">
-
   $("#manual-sku-code").on('keyup', function (e) {
       if (e.keyCode === 13) {
         $("#manual-entry").trigger('click');
@@ -53,7 +74,10 @@
   $('.order-name').on('keyup', function(){
     $('.order-name-input').val($(this).val())
   });
-
+  $(".pick_value_date").on("input", function() {
+  console.log("running")
+    $('#reservation_expiry_date').val($(this).val())
+});
   function remove(elmnt){
     // id = $(elmnt).parent().parent().attr('id')
     $(elmnt).parent().parent().remove()
@@ -82,6 +106,7 @@
           var row_exist = false;
           var rows_subtotal = 0.0;
           var rows_subquantity = 0;
+          console.log("data",res)
           $('#scanned-item-body tr').each(function(){
             product_db_id = $(this).find("#product_db_id");
             if(product_db_id.length > 0){
@@ -106,8 +131,12 @@
           if(!row_exist && parseInt(res.data['inventory']) > 0){
             row ='<tr id=row_' + res.data['id'] + '><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control" data-org-price="'+ res.data['price'] +'" data-price-changed="false"> </td><td> <input class="form-control variant-price-'+ res.data['model_number'].replace(/[_\W]+/g, "-") +'" type="number" min="0" step=".01" value="'+ res.data['price'] +'" name="line_item_price[]" id="variant-price" data-org-price="'+ res.data['price'] +'"> </td><td> <input type="hidden" name="subtotal[]" value="'+ res.data['price'] +'" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td> <td><a class="delete-link" onclick="remove(this)"><i class="fa fa-close"></i></a></td></tr>';
             $('#scanned-item-body').prepend(row);
+             if($('#reservation').is(':checked')){
+                $("#reserve_status_false").prop('checked', true);
+               }else{
+                 $("#reserve_status_false").prop('checked', false);
+               }
           }
-
           if(parseInt(res.data['inventory']) == 0){
             alert("You dont have enough inventory for this item");
           }
@@ -306,7 +335,47 @@
     $('#manual-sku-code').autocomplete({
       source: '/modelnumbers'
     })
-  });  
+  }); 
+  $("#reserve_status_false").hide();
+  $('.check_radio_status').click(function() {
+    if($('#reservation').is(':checked')){
+      $("#reserve_status_false").prop('checked', true);
+      $("#reservation_expiry_date").prop('required',true);
+      $(".pick_value_date").prop('required',true);
+    } 
+    else{
+      $("#reserve_status_false").prop('checked', false);
+      $("#reservation_expiry_date").prop('required',false);
+      $(".pick_value_date").prop('required',false);
+    }
+  });
+  $('#reservation_expiry_date').datepicker('setStartDate', new Date());
+  $('.pick_value_date').datepicker('setStartDate', new Date());
+  $(".pick_value_date").datepicker().on("changeDate", function(e) {
+       var check= $("#reservation_expiry_date").val($(this).val())
+      //  console.log("value changed",check[0].value) 
+  });
+ $("#order-form").on("submit", function(){
+   var paid_value=$("#paid_type")[0].value
+   $("#paidtype")[0].value=paid_value
+    if($('#reservation').is(':checked')){
+      console.log("reserved!")  
+    } 
+    else{
+      $("#reservation_expiry_date")[0].value = ""
+    }
+ })
+ $("#create-order").click(function(){
+  if($('#reservation').is(':checked')){
+        console.log("checked!")
+      if ($(".pick_value_date")[0].value == "")
+      {
+        alert("Expiry Date Required")
+      }
+
+      }
+
+ })
 </script>
 
 <style type="text/css">
@@ -327,4 +396,5 @@
     display: flex;
     justify-content: space-between;
   }
+
 </style>

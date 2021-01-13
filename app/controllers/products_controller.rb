@@ -119,7 +119,7 @@ class ProductsController < ApplicationController
   end
 
   def update_shopify_product
-    # if InventorySetting.last.is_syncing == true
+    if InventorySetting.last.is_syncing == true
       in_house_variants = Product.where(shopify_product_id: params[:id]).collect { |c| c.variant_id }
       shopify_variant_ids = params[:variants].collect { |c| c["id"] }
       deleted_variant_ids = in_house_variants - shopify_variant_ids
@@ -127,13 +127,14 @@ class ProductsController < ApplicationController
         Product.where(variant_id: deleted_variant_ids).destroy_all
       end
       sync_shopify_data
-    # end
+    end
+
   end
 
   def create_product
-    # if InventorySetting.last.is_syncing == true
+    if InventorySetting.last.is_syncing == true
       sync_shopify_data
-    # end
+    end
   end
 
   def delete_product
@@ -187,36 +188,37 @@ class ProductsController < ApplicationController
   end
 
   def create_order
+
     # Match against session token to prevent double order entry
-    
     if session[:create_order_random_token] == params[:random_token]
       session.delete(:create_order_random_token)
-      db_ids = params["product_db_id"]
-      new_qtys = params["new_qty"]
-      totals = params["subtotal"]
-      actual_qtys = params["actual_qty"]
+      db_ids = params[:product_db_id]
+      new_qtys = params[:new_qty]
+      totals = params[:subtotal]
+      actual_qtys = params[:actual_qty]
+      qty_hash = []
+      variants = params[:variant_id]
+      expiry_date = params["reservation_expiry_date"][0].to_s
+      if expiry_date.present?
+        expiry_date=DateTime.strptime(expiry_date,"%m/%d/%Y").to_date
+      end
+      reserve_status = params["reserve_status"]["false"].to_i
+      if reserve_status == 1
+        reserve_status = true
+      elsif reserve_status == 0
+        reserve_status = false
+      end
+      
       order_sum = totals.collect { |total| total.to_f }.sum
       qty_sum = new_qtys.collect { |qty| qty.to_i }.sum
-      order = Order.create(total: order_sum, order_qty: qty_sum, label: params[:label])
-      line_item_prices = params["line_item_price"]
-      variants = params["variant_id"]
-      formed_data = {}
-      db_ids.each.with_index do |id, index|
-        if formed_data[id].nil?
-          formed_data[id] = {new_qty: new_qtys[index],actual_qty: actual_qtys[index],total: totals[index],line_item_price: line_item_prices[index] }
-        else
-           formed_data[id][:new_qty] = formed_data[id][:new_qty].to_i + new_qtys[index].to_i
-          formed_data[id][:line_item_price] = formed_data[id][:line_item_price].to_i + line_item_prices[index].to_i
-          formed_data[id][:total] = formed_data[id][:total].to_i + totals[index].to_i
-        end
-      end
-      {"new_qty"=>["2", "3", "1"], "actual_qty"=>["47", "38", "38"], "variant_id"=>["37848443027653", "37848442994885", "37848442994885"], "product_id"=>["6147233611973", "6147233611973", "6147233611973"], "product_db_id"=>["4", "3", "3"], "line_item_price"=>["1", "11", "12"], "subtotal"=>["2", "33", "12"]}
-      db_ids.zip(new_qtys, totals, actual_qtys, line_item_prices,variants).each do |id, new_qty, total, actual_qty, line_item_price, variant|
-        qty = actual_qty.to_i - abc[variant].to_i
+      order = Order.create(total: order_sum, order_qty: qty_sum, label: params[:label],reservation_expiry_date: expiry_date,reserve_status: reserve_status, paidtype: params["paidtype"]  )
+      line_item_prices = params[:line_item_price]
+      db_ids.zip(new_qtys, totals, actual_qtys, line_item_prices).each do |id, new_qty, total, actual_qty, line_item_price|  
         product = Product.find(id)
+        qty = product.inventory - new_qty.to_i
         if product.variant_id.present?
           result = update_inventory(product.variant_id, qty)
-          if InventorySetting.last.is_syncing == false
+          if InventorySetting.last.is_syncing == true
             product.inventory = qty
             product.save
           end

@@ -1,0 +1,267 @@
+<%if params[:id].present?%>
+    <%if order.lineitems.present?%>
+        <div style="margin-left:2.5%" class="Row"><input type="text" id="manual-sku-code" class="add_new_reservation form-control Column" style="width:17.8%" placeholder="search variant" ><button class="btn btn-primary " style="margin-left:4px;height: 36px;" id="manual-entry" style="">Add New Entry</button></div>
+        <div style="width:100%" >
+            <%= form_tag  update_reservation_path(order),method: :post , html: {id: "order-form" } do %>
+                <div id="">
+                    <div class="expiry-date-style"><b>Expiry date: </b><input type="text" id="reservation_expiry_date" value="<%=order.reservation_expiry_date.strftime("%m/%d/%Y") if order.reservation_expiry_date.present? %>"  name="reservation_expiry_date[]" data-provide='datepicker' placeholder="Set Reservation Expiry Date" class="set_position form-control" style="width:30%" required></div>
+                    <textarea style="margin-left:3%;width:30%" name="order_note" id="order_note" value="" placeholder="Add Note Here" class="form-control"><%=order.note%></textarea><br>
+                        <h6>Existing Entries:</h6>
+                        <% order.lineitems.each do |item| %>
+                            <div class="row  main-div">
+                                <div class="outer-div">
+                                    <div class="Row">
+                                        <div class="sku-style Column"><b>Variant Sku:</b> <%=item.sku%></div>
+                                        <div class="Column">
+                                        <span><b>Quantity: </b></span><input type="number" name="new_qty[]" value="<%= item.order_qty%>" class="form-control"  id="inventory-qty" max="" required="true"></div>
+                                        <div class="Column"><span><b>Price: </b><input type="number" name="price[]" value="<%= item.price%>"  id="price-input" class="form-control"> </div>               <br>    
+                                        <div class="Column"><a class="delete-link style_link" onclick="remove_existing(this)"><i class="fa fa-close"></i></a></div>
+                                    </div>
+                                    <input type="text" style="display:none" value="<%= id = order.id%>">
+                                    <input type="number" style="display:none" name="previous_quantity[]" value="<%= item.order_qty%>">
+                                    <input type="number" style="display:none" name="actual_quantities_update[]" value="<%= item.remain_qty%>">
+
+                                    <hr/>
+                                 </div>   
+                            </div>
+                        <%end%>
+                    <table class="table">
+                        <thead>
+                        <h6>New Entries:</h6>
+                        <tr>
+                            <td>SKU</td>
+                            <td>Quantity</td>
+                            <td>Price</td>
+                            <td>Total</td>
+                            <td></td>
+                        </tr>
+                        </thead>
+                        <tbody id="scanned-item-body">
+                        </tbody>
+                    </table>              
+                </div>
+                <hr>
+                <button type="submit" class="btn btn-primary btn_style" data-disable-with="Updating...">Update</button><br><br>
+            <%end%>
+        <div>    
+    <%end%>
+<%end%>
+
+<script>
+$('#reservation_expiry_date').datepicker('setStartDate', new Date());
+</script>
+<script>
+///////////////
+$("#manual-sku-code").on('keyup', function (e) {
+      if (e.keyCode === 13) {
+        $("#manual-entry").trigger('click');
+        $(this).select();
+      }
+  });
+function remove_existing(elmnt){
+    $(elmnt).parent().parent().find('input')[0].value = "0"
+    $(elmnt).parent().parent().parent().hide();
+    console.log("working that div",$(elmnt).parent().parent().find('input')[0].value)
+}
+  function remove(elmnt){
+    // id = $(elmnt).parent().parent().attr('id')
+    $(elmnt).parent().parent().remove()
+    // $(`#${id}`).remove();
+    var rows_subtotal = 0.0;
+    var rows_subquantity = 0;
+    $('#scanned-item-body tr').each(function(){
+      rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+      rows_subquantity = rows_subquantity + parseInt($(this).find("#inventory-qty")[0].value);
+    });
+    $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+    $("#rows_subquantity b").text(rows_subquantity);
+  }
+
+  $("#manual-entry").click(function(){
+      $('html, body').animate({scrollTop: $("#scanned-item-body").offset().top}, 2000);
+    $.ajax({
+      type: "POST",
+      url: '/products/get_barcode_from_sku',
+      data: { barcode:  $("#manual-sku-code").val()},
+      success: function(res){
+        if(res.status == 200){
+          var product_db_id
+          var inventory_qty;
+          var actual_qty;
+          var inventory_qty;
+          var row_exist = false;
+          var rows_subtotal = 0.0;
+          var rows_subquantity = 0;
+          $('#scanned-item-body tr').each(function(){
+            product_db_id = $(this).find("#product_db_id");
+            if(product_db_id.length > 0){
+              if(parseInt(product_db_id.val()) == parseInt(res.data['id']) && $(product_db_id).attr('data-price-changed') == "false"){
+                row_exist = true;
+                inventory_qty = $(this).find("#inventory-qty");
+                actual_qty = $(this).find("#actual_qty");
+                if(parseInt(inventory_qty.val()) + 1 > parseInt(actual_qty.val())){
+                  alert("Inventory max limit reach");
+                }else{
+                  inventory_qty.val(parseInt(inventory_qty.val()) + 1)
+                  // var total = parseFloat(inventory_qty.val()) * parseFloat(res.data['price'])
+                  var total = parseFloat(inventory_qty.val()) * parseFloat($(".variant-price-"+ res.data['model_number'].replace(/[_\W]+/g, "-")).val())
+                  $(this).find("#subtotal").text(total.toFixed(2));
+                  $(this).find("#subtotal-input").val(total.toFixed(2));
+                }
+               return false;
+              }
+            }
+          });
+
+          if(!row_exist && parseInt(res.data['inventory']) > 0){
+            row ='<tr id=row_' + res.data['id'] + '><td>'+ res.data['model_number'] +'</td> <td> <input type="number" name="new_input_qty[]" class="form-control" value="1" id="inventory-qty" max="'+ res.data['inventory'] +'" required="true"> <input type="hidden" name="actual_new_qty[]" id="actual_qty" value="'+ res.data['inventory'] +'" class="form-control"> <input type="hidden" name="variant_new_id[]" id="variant_id" value="'+ res.data['variant_id'] +'" class="form-control"> <input type="hidden" name="product_id[]" id="product_id" value="'+ res.data['shopify_product_id'] +'" class="form-control"> <input type="hidden" name="product_db_id[]" id="product_db_id" value="'+ res.data['id'] +'" class="form-control" data-org-price="'+ res.data['price'] +'" data-price-changed="false"> </td><td> <input class="form-control variant-price-'+ res.data['model_number'].replace(/[_\W]+/g, "-") +'" type="number" min="0" step=".01" value="'+ res.data['price'] +'" name="line_item_price[]" id="variant-price" data-org-price="'+ res.data['price'] +'"> </td><td> <input type="hidden" name="subtotal[]" value="'+ res.data['price'] +'" id="subtotal-input">total: <b><span id="subtotal">'+ res.data['price'] +'</span></b></td> <td><a class="delete-link" onclick="remove(this)"><i class="fa fa-close"></i></a></td></tr>';
+            $('#scanned-item-body').prepend(row);
+          }
+          if(parseInt(res.data['inventory']) == 0){
+            alert("You dont have enough inventory for this item");
+          }
+          $("#rows_subtotal").show();
+          $("#rows_subquantity").show();
+          $('#scanned-item-body tr').each(function(){
+            rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+            rows_subquantity = rows_subquantity + parseInt($(this).find("#inventory-qty")[0].value);
+          });
+
+          $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+          $("#rows_subquantity b").text(rows_subquantity);
+          $("#start-scanning").hide();
+        }
+        else{
+          alert("Item not found");
+        }
+      }
+    });
+  });
+
+
+  $("#rows_subtotal").hide();
+  $("#rows_subquantity").hide();
+  $('body').on('keyup', '#variant-price', function(){
+    var prd_db = $(this).parent().parent().find("#product_db_id");
+    if($(this).val() != $(this).attr('data-org-price')){
+      $(prd_db).attr('data-price-changed', "true");
+    }
+    else{
+      $(prd_db).attr('data-price-changed', "false");
+    }
+  });
+  $('body').on('keyup', '#inventory-qty, #variant-price', function(){
+    var row = $(this).parent().parent();
+    var rows_subtotal = 0.0;
+    var rows_subquantity = 0.0;
+    var attribute_id = $(this).attr('id')
+    if (attribute_id == 'inventory-qty')
+      var total = parseFloat($(this).val()) * parseFloat(row.find("#variant-price").val());
+    else
+      var total = parseFloat($(this).val()) * parseFloat(row.find("#inventory-qty").val());
+    if(isNaN(total)) {
+      row.find("#subtotal").text("0.0");
+    }
+    else if(attribute_id == 'inventory-qty' && parseInt($(this).val()) > parseInt(row.find("#actual_qty").val())){
+      alert("Quantity can not be greater than available qty " + row.find("#actual_qty").val());
+      $(this).val(row.find("#actual_qty").val());
+      var greater_qty = parseFloat(row.find("#actual_qty").val()) * parseFloat(row.find("#variant-price").val());
+      greater_qty
+      row.find("#subtotal").text(greater_qty);
+      row.find("#subtotal-input").val(greater_qty);
+    }
+    else{
+      row.find("#subtotal").text(total);
+      row.find("#subtotal-input").val(total);
+    }
+
+    $('#scanned-item-body tr').each(function(){
+      rows_subtotal = rows_subtotal + parseFloat($(this).find("#subtotal").text());
+      quantity = parseInt($(this).find("#inventory-qty")[0].value);
+      if (isNaN(quantity)) {
+        quantity = 0
+      }
+      rows_subquantity = rows_subquantity + quantity;
+    });
+
+    $("#rows_subtotal b").text(rows_subtotal.toFixed(2));
+    $("#rows_subquantity b").text(rows_subquantity);
+  });  
+
+  $(document).ready(function () {
+    $('#manual-sku-code').autocomplete({
+      source: '/modelnumbers'
+    })
+  }); 
+
+
+///////////////
+
+
+</script>
+
+<style>
+.btn_style{
+    text-align: center;
+    margin-left: 39%;
+    width: 25%;
+}
+.outer-div{
+    /* border: 1px solid whitesmoke; */
+    width:100%;
+    /* padding:10px; */
+}
+.main-div{
+    margin:20px;
+    /* background-color:whitesmoke; */
+}
+.sku-style{
+    /* background-color: #c5dbcc; */
+    /* margin-top:10px */
+}
+.expiry-date-style{
+    margin-left:3.2%;
+    margin-bottom:3%;
+    width:95%;
+}
+.Row {
+    display: table;
+    width: 100%; /*Optional*/
+    table-layout: fixed; /*Optional*/
+    border-spacing: 10px; /*Optional*/
+}
+.Column {
+    display: table-cell;
+}
+.remove_reservation{
+    position: absolute;
+    right:127px;
+}
+.style_link{
+    margin-left:99.5%; 
+} 
+</style>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

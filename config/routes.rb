@@ -1,6 +1,7 @@
 Rails.application.routes.draw do
   resources :lineitems
   resources :orders
+  resources :reservations
   devise_for :users, skip: [:registrations]
   resources :products do
     post :get_barcode, on: :collection
@@ -31,5 +32,8 @@ Rails.application.routes.draw do
 
   get '/suggestions' => 'products#suggestions', as: 'suggestions'
   get '/modelnumbers' => 'products#modelnumbers', as: 'modelnumbers'
+
+  get '/approve_reservation' => 'reservations#approve_reservation', as: 'approvereservation'
+  post '/update_reservation' => 'reservations#update_reservation', as: 'update_reservation'
 
 end

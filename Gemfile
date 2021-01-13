@@ -34,6 +34,7 @@ gem 'will_paginate-bootstrap4'
 gem 'pg'
 gem 'wicked_pdf'
 gem 'wkhtmltopdf-binary'
+gem 'whenever'
 
 # Use Redis adapter to run Action Cable in production
 # gem 'redis', '~> 4.0'

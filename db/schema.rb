@@ -97,6 +97,8 @@ ActiveRecord::Schema.define(version: 2021_01_13_123934) do
     t.datetime "updated_at", null: false
     t.bigint "variant_id"
     t.string "model_number"
+    t.boolean "sync_with_modeprofi", default: true
+    t.integer "modeprofi_inventory"
   end
 
   create_table "shops", force: :cascade do |t|

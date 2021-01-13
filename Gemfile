@@ -89,4 +89,5 @@ gem 'roo'
 
 gem 'delayed_job_active_record'
 gem 'daemons'
+gem 'bootstrap-datepicker-rails'
 

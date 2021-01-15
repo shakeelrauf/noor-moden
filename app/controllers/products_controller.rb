@@ -8,6 +8,7 @@ class ProductsController < ApplicationController
   require 'barby/outputter/png_outputter'
   require 'barby/outputter/svg_outputter'
   include ApiCalls
+  include CsvExporter
   # GET /products
   # GET /products.json
   def index
@@ -213,6 +214,7 @@ class ProductsController < ApplicationController
       qty_sum = new_qtys.collect { |qty| qty.to_i }.sum
       order = Order.create(total: order_sum, order_qty: qty_sum, label: params[:label],reservation_expiry_date: expiry_date,reserve_status: reserve_status, paidtype: params["paidtype"]  )
       line_item_prices = params[:line_item_price]
+      @operational_data = []
       db_ids.zip(new_qtys, totals, actual_qtys, line_item_prices).each do |id, new_qty, total, actual_qty, line_item_price|  
         product = Product.find(id)
         qty = product.inventory - new_qty.to_i
@@ -255,7 +257,7 @@ class ProductsController < ApplicationController
           )
         end
       end
-      
+      export_order_to_csv(@operational_data) if @operational_data.present?
     end
     redirect_to products_path, notice: 'Your Inventory Has been updated.'
   end
@@ -334,7 +336,18 @@ class ProductsController < ApplicationController
         puts("********Total Retoure items : #{difference_w_m_2}***********")
         puts("********subtotal of lineitem price : #{line_item_total_price}***********")
         puts("********Total of order price : #{order_total_price}***********")
-        return  [new_modeprofi_inventory,differenece_w_m_2, line_item_total_price, order_total_price,line_item_quantity,line_item_price,product]
+        if @operational_data.is_a?(Array)
+          @operational_data.push({
+            new_modeprofi_inventory: new_modeprofi_inventory, 
+            difference_w_m_2: difference_w_m_2, 
+            line_item_total_price: line_item_total_price, 
+            order_total_price: order_total_price, 
+            line_item_quantity: line_item_quantity, 
+            line_item_price: line_item_price, 
+            product: product,
+            order_type: 'Retoure'
+          })
+        end
       end
     end
 
@@ -350,6 +363,17 @@ class ProductsController < ApplicationController
       puts("********Total Sold items : #{new_qty.to_i}***********")
       puts("********subtotal of lineitem price : #{line_item_total_price}***********")
       puts("********Total of order price : #{order_total_price}***********")
-      return  [new_modeprofi_inventory,differenece_w_m_2, line_item_total_price, order_total_price,line_item_quantity,line_item_price,product]
+      if @operational_data.is_a?(Array)
+        @operational_data.push({
+          new_modeprofi_inventory: new_modeprofi_inventory, 
+          difference_w_m_2: difference_w_m_2, 
+          line_item_total_price: line_item_total_price, 
+          order_total_price: order_total_price, 
+          line_item_quantity: line_item_quantity, 
+          line_item_price: line_item_price, 
+          product: product,
+          order_type: 'Sold'
+        })
+      end
     end
 end

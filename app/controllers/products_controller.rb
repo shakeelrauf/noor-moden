@@ -218,9 +218,9 @@ class ProductsController < ApplicationController
         qty = product.inventory - new_qty.to_i
         if params["order_type"] == "order"
           if params["paidtype"] == "Cash"
-            payment_by_cash(product,new_qty,total,order_sum)
+            payment_by_cash(product,new_qty,total,order_sum,line_item_price)
           elsif params["paidtype"] == "Invoice Cash" || params["paidtype"] == "Invoice Card"
-            payment_by_invoice_cash_or_card(product,new_qty,total,order_sum)
+            payment_by_invoice_cash_or_card(product,new_qty,total,order_sum,line_item_price)
           end
         elsif params["order_type"] == "invoice" 
         end
@@ -318,7 +318,9 @@ class ProductsController < ApplicationController
       params.require(:product).permit(:shopify_product_id, :inventory,:modeprofi_inventory, :barcode, :price, :variant_id, :model_number, :sync_with_modeprofi)
     end
 
-    def payment_by_cash(product,new_qty,total,order_sum)  # "difference_w_m" stands for difference between webhook inventory and modeprofi inventory
+    def payment_by_cash(product,new_qty,total,order_sum,line_item_price)  # "difference_w_m" stands for difference between webhook inventory and modeprofi inventory
+      line_item_quantity = new_qty.to_i
+      line_item_price =line_item_price.to_f
       line_item_total_price = total.to_f
       order_total_price = order_sum.to_f
       webhook_inventory = product.inventory
@@ -332,11 +334,13 @@ class ProductsController < ApplicationController
         puts("********Total Retoure items : #{difference_w_m_2}***********")
         puts("********subtotal of lineitem price : #{line_item_total_price}***********")
         puts("********Total of order price : #{order_total_price}***********")
-        return  [differenece_w_m_2, line_item_total_price, order_total_price]
+        return  [new_modeprofi_inventory,differenece_w_m_2, line_item_total_price, order_total_price,line_item_quantity,line_item_price,product]
       end
     end
 
-    def payment_by_invoice_cash_or_card(product,new_qty,total,order_sum)
+    def payment_by_invoice_cash_or_card(product,new_qty,total,order_sum,line_item_price)
+      line_item_quantity = new_qty.to_i
+      line_item_price =line_item_price.to_f
       line_item_total_price = total.to_f
       order_total_price = order_sum.to_f
       modeprofi_inventory = product.modeprofi_inventory
@@ -346,6 +350,6 @@ class ProductsController < ApplicationController
       puts("********Total Sold items : #{new_qty.to_i}***********")
       puts("********subtotal of lineitem price : #{line_item_total_price}***********")
       puts("********Total of order price : #{order_total_price}***********")
-      return  [differenece_w_m_2, line_item_total_price, order_total_price]
+      return  [new_modeprofi_inventory,differenece_w_m_2, line_item_total_price, order_total_price,line_item_quantity,line_item_price,product]
     end
 end

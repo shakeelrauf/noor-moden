@@ -221,10 +221,11 @@ class ProductsController < ApplicationController
         if params["order_type"] == "order"
           if params["paidtype"] == "Cash"
             payment_by_cash(product,new_qty,total,order_sum,line_item_price)
-          elsif params["paidtype"] == "Invoice Cash" || params["paidtype"] == "Invoice Card"
+          end
+        elsif params["order_type"] == "invoice"
+          if params["paidtype"] == "Invoice Cash" || params["paidtype"] == "Invoice Card"
             payment_by_invoice_cash_or_card(product,new_qty,total,order_sum,line_item_price)
           end
-        elsif params["order_type"] == "invoice" 
         end
         if product.variant_id.present?
           result = update_inventory(product.variant_id, qty)
@@ -366,7 +367,7 @@ class ProductsController < ApplicationController
       if @operational_data.is_a?(Array)
         @operational_data.push({
           new_modeprofi_inventory: new_modeprofi_inventory, 
-          difference_w_m_2: difference_w_m_2, 
+          difference_w_m_2: new_qty.to_i, 
           line_item_total_price: line_item_total_price, 
           order_total_price: order_total_price, 
           line_item_quantity: line_item_quantity, 

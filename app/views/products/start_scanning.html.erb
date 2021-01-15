@@ -14,12 +14,12 @@
       <input type="text" name="" placeholder="Enter SKU" id="manual-sku-code"><button id="manual-entry" style="margin-bottom: 4px;margin-left: 4px;" class="btn btn-primary btn-sm">Manual Entry</button>
     </div>
      <div style="margin-left:10%">
-      <input type="radio" class="check_payment_status" id="payment_cash" name="payment" value="payment" checked>
+      <input type="radio" class="check_payment_status" id="payment_cash" name="payment" value="Cash" checked>
       <label for="payment_cash">Cash</label>
       <%# <input type="radio" class="check_radio_status" id="reservation" name="order" value="reservation"> %>
-      <input type="radio" class="check_payment_status" id="payment_invoice_cash" name="payment" value="payment" >
+      <input type="radio" class="check_payment_status" id="payment_invoice_cash" name="payment" value="Invoice Cash" >
       <label for="payment_invoice_cash">Invoice Cash</label>
-      <input type="radio" class="check_payment_status" id="payment_invoice_card" name="payment" value="payment" >
+      <input type="radio" class="check_payment_status" id="payment_invoice_card" name="payment" value="Invoice Card" >
       <label for="payment_invoice_card">Invoice Card</label>
      </div>
     <div>
@@ -335,10 +335,12 @@
       source: '/modelnumbers'
     })
   }); 
+
   $('#reservation_expiry_date').datepicker('setStartDate', new Date());
   $('.pick_value_date').datepicker('setStartDate', new Date());
+
   function check_payment_type(){
-      if($('#payment_cash').is(':checked')){
+    if($('#payment_cash').is(':checked')){
       $("#paidtype")[0].value = "Cash"
     }
     else if ($('#payment_invoice_cash').is(':checked')){
@@ -348,20 +350,33 @@
       $("#paidtype")[0].value = "Invoice Card"
     }
   }
+
+  $("#create-Invoice").prop('disabled', true);
+
+  $('input[type=radio][name=payment]').change(function() {
+  if ($("#payment_cash").is(':checked')){
+    $("#create-Invoice").prop('disabled', true);
+    $("#create-order").prop('disabled', false);
+  }
+  else if($("#payment_invoice_cash").is(':checked') || $("#payment_invoice_card").is(':checked')){
+      $("#create-Invoice").prop('disabled', false);
+      $("#create-order").prop('disabled', true);
+  }
+  })
+
   $("#reserve_status_false").hide();
   $("#create-order").click(function(){
     console.log("clicked")
     check_payment_type();
     $("#reserve_status_false").prop('checked', false);
-    var value  =$("#paidtype")[0].value
     $("#reservation_expiry_date")[0].value = ""
     $(".order_type")[0].value = "order"
     $("#order-form").submit()
   })
+
   $("#create-reservation").click(function(){
     console.log("reservation clicked")
     check_payment_type();
-    var value  =$("#paidtype")[0].value
      $('#reservation_expiry_date').val($(".pick_value_date")[0].value)
      $("#reserve_status_false").prop('checked', true);
      $(".order_type")[0].value = "reservation"
@@ -373,52 +388,16 @@
         $("#order-form").submit()
       }
   })
-  $("#create-invoice").click(function(){
+
+  $("#create-Invoice").click(function(){
     console.log("invoice clicked")
     check_payment_type();
     $("#reserve_status_false").prop('checked', false);
-    var value  =$("#paidtype")[0].value
      $('#reservation_expiry_date')[0].value = ""
      $(".order_type")[0].value = "invoice"
     $("#order-form").submit()
   })
-  // $('.check_radio_status').click(function() {
-  //   if($('#reservation').is(':checked')){
-  //     $("#reserve_status_false").prop('checked', true);
-  //     $("#reservation_expiry_date").prop('required',true);
-  //     $(".pick_value_date").prop('required',true);
-  //   } 
-  //   else{
-  //     $("#reserve_status_false").prop('checked', false);
-  //     $("#reservation_expiry_date").prop('required',false);
-  //     $(".pick_value_date").prop('required',false);
-  //   }
-  // });
- 
-  // $(".pick_value_date").datepicker().on("changeDate", function(e) {
-  //      var check= $("#reservation_expiry_date").val($(this).val())
-  //     //  console.log("value changed",check[0].value) 
-  // });
-//  $("#order-form").on("submit", function(){
-//    var paid_value=$("#paid_type")[0].value
-//    $("#paidtype")[0].value=paid_value
-//     if($('#reservation').is(':checked')){
-//       console.log("reserved!")  
-//     } 
-//     else{
-//       $("#reservation_expiry_date")[0].value = ""
-//     }
-//  })
-//  $("#create-order").click(function(){
-//   if($('#reservation').is(':checked')){
-//         console.log("checked!")
-//       if ($(".pick_value_date")[0].value == "")
-//       {
-//         alert("Expiry Date Required")
-//       }
 
-//       }
-//  })
 </script>
 
 <style type="text/css">

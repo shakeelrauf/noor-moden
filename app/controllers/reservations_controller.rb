@@ -4,6 +4,7 @@ class ReservationsController < ApplicationController
   skip_before_action :authenticate_user!, only: %i[webhook_create_order webhook_cancel_order]
 
   include ApiCalls
+  include CsvExporter
 
   def index
     if params[:query].present?
@@ -72,7 +73,10 @@ class ReservationsController < ApplicationController
         end
         price = price.sum
         quantity = quantity.sum
-        order = order.update(order_qty: quantity, total: price,reservation_expiry_date: expiry_date,note: params["order_note"])
+        if params["order_type_update"].present?
+           order_type_value = params["order_type_update"]
+        end
+        order = order.update(order_qty: quantity, total: price,reservation_expiry_date: expiry_date,note: params["order_note"],paidtype: order_type_value)
     end
     redirect_to reservations_path , notice: "Reservation Updated Successfully."
  end
@@ -86,9 +90,16 @@ class ReservationsController < ApplicationController
   end
 
   def approve_reservation
-    @order = Order.find(params["format"].to_i)
-    @order.reserve_status = false
-    @order.save
+    order = Order.find(params["format"].to_i)
+    order.reserve_status = false
+    order.save
+    if order.paidtype.present?
+      if order.paidtype == "Cash"
+        payment_by_cash(order)
+      elsif order.paidtype == "Invoice Cash" || order.paidtype == "Invoice Card"
+        payment_by_invoice(order)
+      end
+    end
     redirect_to reservations_url , notice: 'Order status is updated.'  
   end
  
@@ -149,6 +160,73 @@ class ReservationsController < ApplicationController
           sku: model.model_number,
           price: params["line_item_price"][index].to_f
       )
+    end
+
+    def payment_by_cash(order)
+      @operational_data = []
+      order.lineitems.each do |line_item|
+        product = Product.find_by(variant_id: line_item.variant_id)
+        line_item_quantity = line_item.order_qty.to_i
+        line_item_price =line_item.price.to_f
+        line_item_total_price = line_item.total.to_f
+        order_total_price = order.total.to_f
+        webhook_inventory = line_item.remain_qty.to_i +  line_item.order_qty.to_i
+        modeprofi_inventory = product.modeprofi_inventory
+        difference_w_m = webhook_inventory - modeprofi_inventory
+        if difference_w_m < line_item_quantity
+          difference_w_m_2 = line_item_quantity - difference_w_m
+          new_modeprofi_inventory = modeprofi_inventory - difference_w_m_2
+          product.modeprofi_inventory = new_modeprofi_inventory
+          product.save
+          puts("********Total Retoure items : #{difference_w_m_2}***********")
+          puts("********subtotal of lineitem price : #{line_item_total_price}***********")
+          puts("********Total of order price : #{order_total_price}***********")
+          if @operational_data.is_a?(Array)
+            @operational_data.push({
+              new_modeprofi_inventory: new_modeprofi_inventory, 
+              difference_w_m_2: difference_w_m_2, 
+              line_item_total_price: line_item_total_price, 
+              order_total_price: order_total_price, 
+              line_item_quantity: line_item_quantity, 
+              line_item_price: line_item_price, 
+              product: product,
+              order_type: 'Retoure'
+            })
+          end
+        end
+      end
+      export_order_to_csv(@operational_data) if @operational_data.present?
+    end
+
+    def payment_by_invoice(order)
+      @operational_data = []
+      order.lineitems.each do |line_item|
+        product = Product.find_by(variant_id: line_item.variant_id)
+        line_item_quantity = line_item.order_qty.to_i
+        line_item_price =line_item.price.to_f
+        line_item_total_price = line_item.total.to_f
+        order_total_price = order.total.to_f
+        modeprofi_inventory = product.modeprofi_inventory
+        new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
+        product.modeprofi_inventory = new_modeprofi_inventory
+        product.save
+        puts("********Total Sold items : #{line_item_quantity}***********")
+        puts("********subtotal of lineitem price : #{line_item_total_price}***********")
+        puts("********Total of order price : #{order_total_price}***********")
+        if @operational_data.is_a?(Array)
+          @operational_data.push({
+            new_modeprofi_inventory: new_modeprofi_inventory, 
+            difference_w_m_2: line_item_quantity, 
+            line_item_total_price: line_item_total_price, 
+            order_total_price: order_total_price, 
+            line_item_quantity: line_item_quantity, 
+            line_item_price: line_item_price, 
+            product: product,
+            order_type: 'Sold'
+          })
+        end
+      end
+      export_order_to_csv(@operational_data) if @operational_data.present?
     end
 
 end

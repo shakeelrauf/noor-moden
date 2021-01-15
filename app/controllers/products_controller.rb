@@ -323,32 +323,33 @@ class ProductsController < ApplicationController
 
     def payment_by_cash(product,new_qty,total,order_sum,line_item_price)  # "difference_w_m" stands for difference between webhook inventory and modeprofi inventory
       line_item_quantity = new_qty.to_i
-      line_item_price =line_item_price.to_f
-      line_item_total_price = total.to_f
-      order_total_price = order_sum.to_f
       webhook_inventory = product.inventory
       modeprofi_inventory = product.modeprofi_inventory
       difference_w_m = webhook_inventory - modeprofi_inventory
-      if difference_w_m < new_qty.to_i
-        difference_w_m_2 = new_qty.to_i - difference_w_m
-        new_modeprofi_inventory = modeprofi_inventory - difference_w_m_2
-        product.modeprofi_inventory = new_modeprofi_inventory
-        product.save
-        puts("********Total Retoure items : #{difference_w_m_2}***********")
-        puts("********subtotal of lineitem price : #{line_item_total_price}***********")
-        puts("********Total of order price : #{order_total_price}***********")
-        if @operational_data.is_a?(Array)
-          @operational_data.push({
-            new_modeprofi_inventory: new_modeprofi_inventory, 
-            difference_w_m_2: difference_w_m_2, 
-            line_item_total_price: line_item_total_price, 
-            order_total_price: order_total_price, 
-            line_item_quantity: line_item_quantity, 
-            line_item_price: line_item_price, 
-            product: product,
-            order_type: 'Retoure'
-          })
-        end
+      if difference_w_m < line_item_quantity
+        scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
+      end
+    end
+
+    def scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
+      line_item_price =line_item_price.to_f
+      line_item_total_price = total.to_f
+      order_total_price = order_sum.to_f
+      difference_w_m_2 = line_item_quantity - difference_w_m
+      new_modeprofi_inventory = modeprofi_inventory - difference_w_m_2
+      product.modeprofi_inventory = new_modeprofi_inventory
+      product.save
+      if @operational_data.is_a?(Array)
+        @operational_data.push({
+          new_modeprofi_inventory: new_modeprofi_inventory, 
+          difference_w_m_2: difference_w_m_2, 
+          line_item_total_price: line_item_total_price, 
+          order_total_price: order_total_price, 
+          line_item_quantity: line_item_quantity, 
+          line_item_price: line_item_price, 
+          product: product,
+          order_type: 'Retoure'
+        })
       end
     end
 
@@ -377,4 +378,5 @@ class ProductsController < ApplicationController
         })
       end
     end
+
 end

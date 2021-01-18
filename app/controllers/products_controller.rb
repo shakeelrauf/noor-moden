@@ -331,28 +331,6 @@ class ProductsController < ApplicationController
       end
     end
 
-    def scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
-      line_item_price =line_item_price.to_f
-      line_item_total_price = total.to_f
-      order_total_price = order_sum.to_f
-      difference_w_m_2 = line_item_quantity - difference_w_m
-      new_modeprofi_inventory = modeprofi_inventory - difference_w_m_2
-      product.modeprofi_inventory = new_modeprofi_inventory
-      product.save
-      if @operational_data.is_a?(Array)
-        @operational_data.push({
-          new_modeprofi_inventory: new_modeprofi_inventory, 
-          difference_w_m_2: difference_w_m_2, 
-          line_item_total_price: line_item_total_price, 
-          order_total_price: order_total_price, 
-          line_item_quantity: line_item_quantity, 
-          line_item_price: line_item_price, 
-          product: product,
-          order_type: 'Retoure'
-        })
-      end
-    end
-
     def payment_by_invoice_cash_or_card(product,new_qty,total,order_sum,line_item_price)
       line_item_quantity = new_qty.to_i
       line_item_price =line_item_price.to_f
@@ -373,8 +351,32 @@ class ProductsController < ApplicationController
           order_total_price: order_total_price, 
           line_item_quantity: line_item_quantity, 
           line_item_price: line_item_price, 
-          product: product,
+          product: product.model_number,
           order_type: 'Sold'
+        })
+      end
+    end
+    
+    def scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
+      line_item_price =line_item_price.to_f
+      line_item_total_price = total.to_f
+      order_total_price = order_sum.to_f
+      difference_w_m_2 = line_item_quantity - difference_w_m
+      new_modeprofi_inventory = modeprofi_inventory - difference_w_m_2
+      product.modeprofi_inventory = new_modeprofi_inventory
+      product.save
+      puts("********Total of RETUORE : #{difference_w_m_2}***********")
+      line_item_total_price = line_item_price * difference_w_m_2.to_f
+      if @operational_data.is_a?(Array)
+        @operational_data.push({
+          new_modeprofi_inventory: new_modeprofi_inventory, 
+          difference_w_m_2: difference_w_m_2, 
+          line_item_total_price: line_item_total_price, 
+          order_total_price: order_total_price, 
+          line_item_quantity: difference_w_m_2, 
+          line_item_price: line_item_price, 
+          product: product.model_number,
+          order_type: 'Retoure'
         })
       end
     end

@@ -9,6 +9,7 @@ module CsvExporter
 			CSV.open(@file, 'w', write_headers: true, headers: @headers) do |writer|
 				data.each do |item|
 					array = Array.new @headers.length, ''
+					array[25] = item[:product]
 	  			array[11] = item[:order_total_price]
 	  			array[12] = item[:order_type]
 	  			array[29] = item[:line_item_quantity]

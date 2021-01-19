@@ -52,7 +52,7 @@ class ReservationsController < ApplicationController
             result = update_inventory(item.variant_id, qty) #updating shopify inventory
             variant.inventory = qty
             variant.save
-            destroy_else_update_item(item,index)   #delete selected items or update previous items
+            destroy_else_update_item(item,index,qty)   #delete selected items or update previous items
             quantity << params[:new_qty][index].to_i   
             price << params[:price][index].to_f * params[:new_qty][index].to_f 
             new_qty = params[:new_qty][index].to_i
@@ -113,14 +113,15 @@ class ReservationsController < ApplicationController
       params.require(:order).permit(:variant_id, :product_id, :order_qty, :remain_qty, :total)
     end
 
-    def destroy_else_update_item(item,index)
+    def destroy_else_update_item(item,index,qty)
       if params[:new_qty][index].to_i == 0            #Destroy Else Update
           puts("**********DESTROYED**#{index}*****variant_id******#{item.variant_id}*********")
           item.destroy
       else
           puts("*******Update********")
           pricing =  params[:price][index]
-          item.order_qty = params[:new_qty][index].dup
+          item.order_qty = params[:new_qty][index]
+          item.remain_qty = qty
           item.price = pricing
           item.save
       end
@@ -174,7 +175,14 @@ class ReservationsController < ApplicationController
           scenario_1_cash(difference_w_m,line_item_quantity,product,line_item,modeprofi_inventory,order)
         end
       end
-      export_order_to_csv(@operational_data) if @operational_data.present?
+      if @operational_data.present?
+        sum = @operational_data.collect{|item| item[:line_item_quantity].to_f * item[:line_item_price].to_f}.sum
+        @operational_data.map do |item|
+          item[:order_total_price] = sum
+          item
+        end
+        export_order_to_csv(@operational_data)
+      end
     end
 
     def payment_by_invoice(order)
@@ -230,5 +238,5 @@ class ReservationsController < ApplicationController
         })
       end
     end
-    
+
 end

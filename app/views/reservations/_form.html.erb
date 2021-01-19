@@ -27,7 +27,6 @@
                                         <div class="Column"><a class="delete-link style_link" onclick="remove_existing(this)"><i class="fa fa-close"></i></a></div>
                                     </div>
                                     <input type="text" style="display:none" value="<%= id = order.id%>">
-                                    <input style="display: none;" class="order_type_update" type="text" name="order_type_update" placeholder="">
                                     <input type="number" style="display:none" name="previous_quantity[]" value="<%= item.order_qty%>">
                                     <input type="number" style="display:none" name="actual_quantities_update[]" value="<%= item.remain_qty%>">
                                     <hr/>
@@ -50,7 +49,8 @@
                     </table>              
                 </div>
                 <hr>
-                <button type="submit" class="btn btn-primary btn_style" data-disable-with="Updating...">Update</button><br><br>
+                <input style="display: none;" id="order_type_update" type="text" name="order_type_update" placeholder="">
+                <button type="submit" class="btn btn-primary btn_style" id="check_on_submit" data-disable-with="Updating...">Update</button><br><br>
             <%end%>
         <div>    
     <%end%>
@@ -205,28 +205,30 @@ function remove_existing(elmnt){
     if (check_status == "Cash")
       {
         $("#check_cash").prop("checked",true)
-        $(".order_type_update")[0].value = "Cash"
+        $("#order_type_update")[0].value = "Cash"
       }
       else if (check_status == "Invoice Cash"){
         $("#check_invoice_cash").prop("checked",true)
-        $(".order_type_update")[0].value = "Invoice Cash"
+        $("#order_type_update")[0].value = "Invoice Cash"
       }
       else if(check_status == "Invoice Card"){
         $("#check_invoice_cash").prop("checked",true)
-        $(".order_type_update")[0].value = "Invoice Card"
+        $("#order_type_update")[0].value = "Invoice Card"
       }
-    var newval = $(".order_type_update")[0].value
+    var newval = $("#order_type_update")[0].value
     console.log("newval",newval)
   }); 
   $('input[type=radio][name=check]').change(function() {
      if($('#check_cash').is(':checked')){
-      $(".order_type_update")[0].value = "Cash"
+      $("#order_type_update")[0].value = "Cash"
+      console.log("working cash")
     }
     else if ($('#check_invoice_cash').is(':checked')){
-      $(".order_type_update")[0].value = "Invoice Cash"
+      $("#order_type_update")[0].value = "Invoice Cash"
+      console.log("working invpice cash")
     }
     else{
-      $(".order_type_update")[0].value = "Invoice Card"
+      $("#order_type_update")[0].value = "Invoice Card"
     }
 
   })

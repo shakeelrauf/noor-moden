@@ -13,6 +13,7 @@ class ProductsController < ApplicationController
   # GET /products.json
   def index
     @syncing_status = InventorySetting.last.is_syncing
+    @sku_type = SkuType.last.sku_type
     if params[:query].present?
       @products = Product.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
     else
@@ -33,6 +34,14 @@ class ProductsController < ApplicationController
       syncing = InventorySetting.last
       syncing.is_syncing = !InventorySetting.last.is_syncing
       syncing.save
+    end
+  end
+
+  def change_sku_type
+    if params[:sku_type]
+      type = SkuType.last
+      type.sku_type = params[:sku_type]
+      type.save
     end
   end
 
@@ -334,6 +343,11 @@ class ProductsController < ApplicationController
       line_item_total_price = total.to_f
       order_total_price = order_sum.to_f
       modeprofi_inventory = product.modeprofi_inventory
+      webhook_inventory = product.inventory
+      difference_w_m = webhook_inventory - modeprofi_inventory
+      if difference_w_m >= line_item_quantity
+        scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
+      else
       new_modeprofi_inventory = modeprofi_inventory - new_qty.to_i
       product.modeprofi_inventory = new_modeprofi_inventory
       product.save
@@ -350,6 +364,41 @@ class ProductsController < ApplicationController
         product: product.model_number,
         order_type: 'Sold'
       }) if @operational_data.is_a?(Array)
+      end
+    end
+
+    def scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
+        remaining_order_items = modeprofi_inventory - line_item_quantity
+        line_item_quantity = line_item_quantity - remaining_order_items.abs
+        new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
+        product.modeprofi_inventory = new_modeprofi_inventory
+        product.save
+        line_item_total_price = line_item_quantity * line_item_price
+        @operational_data.push({
+          new_modeprofi_inventory: new_modeprofi_inventory, 
+          difference_w_m_2: line_item_quantity, 
+          line_item_total_price: line_item_total_price, 
+          order_total_price: order_total_price, 
+          line_item_quantity: line_item_quantity, 
+          line_item_price: line_item_price, 
+          product: product.model_number,
+          order_type: 'Sold'
+        }) if @operational_data.is_a?(Array)
+        if remaining_order_items.to_i < 0
+          remaining_order_items = remaining_order_items.abs
+        end
+          line_item_total_price = remaining_order_items * line_item_price
+          sku_type =SkuType.last.sku_type
+          @operational_data.push({
+            new_modeprofi_inventory: new_modeprofi_inventory, 
+            difference_w_m_2: remaining_order_items, 
+            line_item_total_price: line_item_total_price, 
+            order_total_price: order_total_price, 
+            line_item_quantity: remaining_order_items, 
+            line_item_price: line_item_price, 
+            product: sku_type,
+            order_type: 'Sold'
+          }) if @operational_data.is_a?(Array)
     end
 
     def payment_by_cash(product,new_qty,total,order_sum,line_item_price)  # "difference_w_m" stands for difference between webhook inventory and modeprofi inventory
@@ -360,6 +409,9 @@ class ProductsController < ApplicationController
       if difference_w_m < line_item_quantity
         scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
       end
+      # if difference_w_m >= line_item_quantity
+      #   scenario_3_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
+      # end
     end
     
     def scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
@@ -383,5 +435,5 @@ class ProductsController < ApplicationController
         order_type: 'Retoure'
       }) if @operational_data.is_a?(Array)
     end
-
+  
 end

@@ -17,7 +17,14 @@
         </div>
       </form>
     </div>
+    
     <div class="col-5 flex-div">
+     <div class="select-div-wrapper">
+        <form action="/change_sku_type" method="post"  class="sync-btn-form">
+          <label>Sku Type</label>
+          <%= select_tag :sku_type, options_for_select(sku_type_options, @sku_type), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary' %>
+        </form>
+      </div>  
       <div class="select-div-wrapper">
         <form action="/change_sync" method="post"  class="sync-btn-form">
           <label>Syncing</label>

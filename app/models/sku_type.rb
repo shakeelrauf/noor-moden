@@ -1,0 +1,2 @@
+class SkuType < ApplicationRecord
+end

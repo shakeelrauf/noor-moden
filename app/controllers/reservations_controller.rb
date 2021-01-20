@@ -194,25 +194,63 @@ class ReservationsController < ApplicationController
         line_item_total_price = line_item.total.to_f
         order_total_price = order.total.to_f
         modeprofi_inventory = product.modeprofi_inventory
-        new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
-        product.modeprofi_inventory = new_modeprofi_inventory
-        product.save
-        if @operational_data.is_a?(Array)
-          @operational_data.push({
-            new_modeprofi_inventory: new_modeprofi_inventory, 
-            difference_w_m_2: line_item_quantity, 
-            line_item_total_price: line_item_total_price, 
-            order_total_price: order_total_price, 
-            line_item_quantity: line_item_quantity, 
-            line_item_price: line_item_price, 
-            product: product.model_number,
-            order_type: 'Sold'
-          })
+        webhook_inventory = line_item.remain_qty.to_i +  line_item.order_qty.to_i
+        difference_w_m = webhook_inventory - modeprofi_inventory
+        if difference_w_m >= line_item_quantity
+          scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
+        else
+          new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
+          product.modeprofi_inventory = new_modeprofi_inventory
+          product.save
+          if @operational_data.is_a?(Array)
+            @operational_data.push({
+              new_modeprofi_inventory: new_modeprofi_inventory, 
+              difference_w_m_2: line_item_quantity, 
+              line_item_total_price: line_item_total_price, 
+              order_total_price: order_total_price, 
+              line_item_quantity: line_item_quantity, 
+              line_item_price: line_item_price, 
+              product: product.model_number,
+              order_type: 'Sold'
+            })
+          end
         end
       end
       export_order_to_csv(@operational_data) if @operational_data.present?
     end
-
+    def scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
+      remaining_order_items = modeprofi_inventory - line_item_quantity
+        line_item_quantity = line_item_quantity - remaining_order_items.abs
+        new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
+        product.modeprofi_inventory = new_modeprofi_inventory
+        product.save
+        line_item_total_price = line_item_quantity * line_item_price
+        @operational_data.push({
+          new_modeprofi_inventory: new_modeprofi_inventory, 
+          difference_w_m_2: line_item_quantity, 
+          line_item_total_price: line_item_total_price, 
+          order_total_price: order_total_price, 
+          line_item_quantity: line_item_quantity, 
+          line_item_price: line_item_price, 
+          product: product.model_number,
+          order_type: 'Sold'
+        }) if @operational_data.is_a?(Array)
+        if remaining_order_items.to_i < 0
+          remaining_order_items = remaining_order_items.abs
+        end
+          line_item_total_price = remaining_order_items * line_item_price
+          sku_type =SkuType.last.sku_type
+          @operational_data.push({
+            new_modeprofi_inventory: new_modeprofi_inventory, 
+            difference_w_m_2: remaining_order_items, 
+            line_item_total_price: line_item_total_price, 
+            order_total_price: order_total_price, 
+            line_item_quantity: remaining_order_items, 
+            line_item_price: line_item_price, 
+            product: sku_type,
+            order_type: 'Sold'
+          }) if @operational_data.is_a?(Array)
+    end
     def scenario_1_cash(difference_w_m,line_item_quantity,product,line_item,modeprofi_inventory,order)
       line_item_price =line_item.price.to_f
       line_item_total_price = line_item.total.to_f

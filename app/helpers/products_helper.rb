@@ -7,6 +7,10 @@ module ProductsHelper
     	[['On', 'true'],['Off', 'false']]
     end
 
+    def sku_type_options
+    	[['Restware', 'Restware'],['Damaged', 'Damaged'],['other','other']]
+    end
+
     def modeprofi_options
     	[['Modeprofi On', 'true'],['Modeprofi Off', 'false']]
     end

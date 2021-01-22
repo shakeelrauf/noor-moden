@@ -85,10 +85,11 @@
             <%end%>
             <%if order.status == "Processed" %>
                 <td><%= link_to 'Approve', approvereservation_path(order, order_id: count),data: { confirm: 'Are you sure?' } %></td>
+                <td>  <%= link_to 'Edit', edit_reservation_path(order)  %></td>
             <%else%>
             <td></td>
+            <td></td>
             <%end%>
-            <td>  <%= link_to 'Edit', edit_reservation_path(order)  %></td>
               <td>
                 <%= link_to 'Detail', reservation_path(order, order_id: count) %>
               </td>

@@ -1,34 +1,34 @@
-<div class="container">
+<div class="mx-5">
   <p id="notice"><%= notice %></p>
 
   <h1>Products</h1>
-  <div class="row">
+  <div class="row d-flex align-items-end mb-4">
     <div class="col-4">
-      <%= link_to 'Export Products', export_products_path, data: { confirm: "Are you sure?" }, class: "btn btn-primary", style: 'margin-bottom: 10px;' %>
-      <button class="btn btn-primary import-btn" style='margin-bottom: 10px;margin-left: 2px;'>Import
+      <%= link_to 'Export Products', export_products_path, data: { confirm: "Are you sure?" }, class: "btn btn-primary", style: '' %>
+      <button class="btn btn-primary import-btn" style='margin-left: 2px;'>Import
         Products</button>
     </div>
   
     <div class="col-3">
       <form action="/products">
-        <div class="form-group">
+        <div class="">
           <input id="search-autocomplete" type="text" name="query" value="<%= params[:query] %>" class='form-control'
             placeholder="Search using product or variant id">
         </div>
       </form>
     </div>
     
-    <div class="col-5 flex-div">
-     <div class="select-div-wrapper">
-        <form action="/change_sku_type" method="post"  class="sync-btn-form">
+    <div class="col-5 flex-div align-items-end">
+     <div class="select-div-wrapper " style="max-width:25%">
+        <form action="/change_sku_type" method="post"  class="sync-btn-form ">
           <label>Sku Type</label>
-          <%= select_tag :sku_type, options_for_select(sku_type_options, @sku_type), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary' %>
+          <%= select_tag :sku_type, options_for_select(sku_type_options, @sku_type), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary ' %>
         </form>
-      </div>  
-      <div class="select-div-wrapper">
+      </div> 
+      <div class="select-div-wrapper" style="max-width:14%">
         <form action="/change_sync" method="post"  class="sync-btn-form">
           <label>Syncing</label>
-          <%= select_tag :is_syncing, options_for_select(syncing_options, @syncing_status), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary' %>
+          <%= select_tag :is_syncing, options_for_select(syncing_options, @syncing_status), onchange: 'this.form.submit()', class: 'select-options form-control btn-primary ' %>
         </form>
       </div>
       <div class="select-div-wrapper">
@@ -37,7 +37,7 @@
         </form>
       </div>
       <div>
-        <%= link_to 'New Product', new_product_path, class: "btn btn-primary", style: 'margin-bottom: 10px;' %>
+        <%= link_to 'New Product', new_product_path, class: "btn btn-primary", style: '' %>
       </div>
     </div>
   </div>
@@ -128,7 +128,7 @@
   }
 
   .sync-btn-form{
-      display: inline-flex;
+      /* display: inline-flex; */
       align-items: center;
   }
 
@@ -143,6 +143,10 @@
   }
   .select-div-wrapper label {
     margin-right: 5px;
+  }
+
+  .set_width {
+    width: 28%;
   }
 </style>
 

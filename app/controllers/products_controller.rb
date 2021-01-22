@@ -13,7 +13,7 @@ class ProductsController < ApplicationController
   # GET /products.json
   def index
     @syncing_status = InventorySetting.last.is_syncing
-    @sku_type = SkuType.last.sku_type
+    @sku_type = SkuType&.last&.sku_type
     if params[:query].present?
       @products = Product.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
     else

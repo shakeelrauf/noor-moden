@@ -3,7 +3,6 @@ class SaleOrderHandler
 	
 	def initialize(options)
 		@options = options
-		debugger
     @db_ids, @new_qtys, @line_item_prices, @totals = options[:product_db_id], options[:new_qty], options[:line_item_price], options[:subtotal]
     @actual_qtys, @variants, @qty_hash, @expiry_date = options[:actual_qty], options[:variant_id] , [], options["reservation_expiry_date"][0].to_s
     @expiry_date = DateTime.strptime(@expiry_date,"%m/%d/%Y").to_date if @expiry_date.present?

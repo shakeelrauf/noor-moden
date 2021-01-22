@@ -12,6 +12,9 @@ class ProductsController < ApplicationController
   # GET /products
   # GET /products.json
   def index
+    if SkuType.all.count < 1
+      SkuType.create(sku_type: "Restware")
+    end
     @syncing_status = InventorySetting.last.is_syncing
     @sku_type = SkuType&.last&.sku_type
     if params[:query].present?
@@ -38,7 +41,7 @@ class ProductsController < ApplicationController
   end
 
   def change_sku_type
-    if params[:sku_type]
+    if params[:sku_type]  
       type = SkuType.last
       if type.present?
         type.sku_type = params[:sku_type]

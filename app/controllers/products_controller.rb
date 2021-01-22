@@ -13,7 +13,7 @@ class ProductsController < ApplicationController
   # GET /products.json
   def index
     @syncing_status = InventorySetting.last.is_syncing
-    @sku_type = SkuType.last.sku_type
+    @sku_type = SkuType&.last&.sku_type
     if params[:query].present?
       @products = Product.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
     else
@@ -198,82 +198,12 @@ class ProductsController < ApplicationController
   end
 
   def create_order
-
     # Match against session token to prevent double order entry
     if session[:create_order_random_token] == params[:random_token]
       session.delete(:create_order_random_token)
-      db_ids = params[:product_db_id]
-      new_qtys = params[:new_qty]
-      line_item_prices = params[:line_item_price]
-      totals = params[:subtotal]
-      actual_qtys = params[:actual_qty]
-      variants = params[:variant_id]
-      qty_hash = []
-      expiry_date = params["reservation_expiry_date"][0].to_s
-      if expiry_date.present?
-        expiry_date=DateTime.strptime(expiry_date,"%m/%d/%Y").to_date
-      end
-      reserve_status = params["reserve_status"]["false"].to_i
-      if reserve_status == 1
-        reserve_status = true
-      elsif reserve_status == 0
-        reserve_status = false
-      end 
-
-      order_sum = totals.collect { |total| total.to_f }.sum
-      qty_sum = new_qtys.collect { |qty| qty.to_i }.sum
-      order = Order.create(total: order_sum, order_qty: qty_sum, label: params[:label],reservation_expiry_date: expiry_date,reserve_status: reserve_status, paidtype: params["paidtype"]  )
-      @operational_data = []
-      db_ids.zip(new_qtys, totals, actual_qtys, line_item_prices).each do |id, new_qty, total, actual_qty, line_item_price|  
-        product = Product.find(id)
-        qty = product.inventory - new_qty.to_i
-        if params["order_type"] == "order"
-          if params["paidtype"] == "Cash"
-            payment_by_cash(product,new_qty,total,order_sum,line_item_price)
-          end
-        elsif params["order_type"] == "invoice"
-          if params["paidtype"] == "Invoice Cash" || params["paidtype"] == "Invoice Card"
-            payment_by_invoice_cash_or_card(product,new_qty,total,order_sum,line_item_price)
-          end
-        end
-        if product.variant_id.present?
-          result = update_inventory(product.variant_id, qty)
-          if InventorySetting.last.is_syncing == true
-            product.inventory = qty
-            product.save
-          end
-          Lineitem.create(
-            variant_id: product.variant_id,
-            shopify_product_id: product.shopify_product_id,
-            product_id: product.id,
-            order_qty: new_qty,
-            remain_qty: qty,
-            total: total,
-            order_id: order.id,
-            sku: product.model_number,
-            price: line_item_price
-          )
-        else
-          product.inventory = qty
-          product.save
-          Lineitem.create(
-            product_id: product.id,
-            order_qty: new_qty,
-            remain_qty: qty,
-            total: total,
-            order_id: order.id,
-            sku: product.model_number,
-            price: line_item_price
-          )
-        end
-      end
-      if @operational_data.present?
-        sum = @operational_data.collect{|item| item[:line_item_quantity].to_f * item[:line_item_price].to_f}.sum
-        @operational_data.map do |item|
-          item[:order_total_price] = sum
-          item
-        end
-        export_order_to_csv(@operational_data)
+      returned_data = SaleOrderHandler.new(params).generate_order
+      if returned_data.present?
+        export_order_to_csv(returned_data)
       end
     end
     redirect_to products_path, notice: 'Your Inventory Has been updated.'
@@ -335,105 +265,6 @@ class ProductsController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def product_params
       params.require(:product).permit(:shopify_product_id, :inventory,:modeprofi_inventory, :barcode, :price, :variant_id, :model_number, :sync_with_modeprofi)
-    end
-
-    def payment_by_invoice_cash_or_card(product,new_qty,total,order_sum,line_item_price)
-      line_item_quantity = new_qty.to_i
-      line_item_price =line_item_price.to_f
-      line_item_total_price = total.to_f
-      order_total_price = order_sum.to_f
-      modeprofi_inventory = product.modeprofi_inventory
-      webhook_inventory = product.inventory
-      difference_w_m = webhook_inventory - modeprofi_inventory
-      if difference_w_m >= line_item_quantity
-        scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
-      else
-      new_modeprofi_inventory = modeprofi_inventory - new_qty.to_i
-      product.modeprofi_inventory = new_modeprofi_inventory
-      product.save
-      puts("********Total Sold items : #{new_qty.to_i}***********")
-      puts("********subtotal of lineitem price : #{line_item_total_price}***********")
-      puts("********Total of order price : #{order_total_price}***********")
-      @operational_data.push({
-        new_modeprofi_inventory: new_modeprofi_inventory, 
-        difference_w_m_2: new_qty.to_i, 
-        line_item_total_price: line_item_total_price, 
-        order_total_price: order_total_price, 
-        line_item_quantity: line_item_quantity, 
-        line_item_price: line_item_price, 
-        product: product.model_number,
-        order_type: 'Sold'
-      }) if @operational_data.is_a?(Array)
-      end
-    end
-
-    def scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
-        remaining_order_items = modeprofi_inventory - line_item_quantity
-        line_item_quantity = line_item_quantity - remaining_order_items.abs
-        new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
-        product.modeprofi_inventory = new_modeprofi_inventory
-        product.save
-        line_item_total_price = line_item_quantity * line_item_price
-        @operational_data.push({
-          new_modeprofi_inventory: new_modeprofi_inventory, 
-          difference_w_m_2: line_item_quantity, 
-          line_item_total_price: line_item_total_price, 
-          order_total_price: order_total_price, 
-          line_item_quantity: line_item_quantity, 
-          line_item_price: line_item_price, 
-          product: product.model_number,
-          order_type: 'Sold'
-        }) if @operational_data.is_a?(Array)
-        if remaining_order_items.to_i < 0
-          remaining_order_items = remaining_order_items.abs
-        end
-          line_item_total_price = remaining_order_items * line_item_price
-          sku_type =SkuType.last.sku_type
-          @operational_data.push({
-            new_modeprofi_inventory: new_modeprofi_inventory, 
-            difference_w_m_2: remaining_order_items, 
-            line_item_total_price: line_item_total_price, 
-            order_total_price: order_total_price, 
-            line_item_quantity: remaining_order_items, 
-            line_item_price: line_item_price, 
-            product: sku_type,
-            order_type: 'Sold'
-          }) if @operational_data.is_a?(Array)
-    end
-
-    def payment_by_cash(product,new_qty,total,order_sum,line_item_price)  # "difference_w_m" stands for difference between webhook inventory and modeprofi inventory
-      line_item_quantity = new_qty.to_i
-      webhook_inventory = product.inventory
-      modeprofi_inventory = product.modeprofi_inventory
-      difference_w_m = webhook_inventory - modeprofi_inventory
-      if difference_w_m < line_item_quantity
-        scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
-      end
-      # if difference_w_m >= line_item_quantity
-      #   scenario_3_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
-      # end
-    end
-    
-    def scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
-      line_item_price =line_item_price.to_f
-      line_item_total_price = total.to_f
-      order_total_price = order_sum.to_f
-      difference_w_m_2 = line_item_quantity - difference_w_m
-      new_modeprofi_inventory = modeprofi_inventory - difference_w_m_2
-      product.modeprofi_inventory = new_modeprofi_inventory
-      product.save
-      puts("********Total of RETUORE : #{difference_w_m_2}***********")
-      line_item_total_price = line_item_price * difference_w_m_2.to_f
-      @operational_data.push({
-        new_modeprofi_inventory: new_modeprofi_inventory, 
-        difference_w_m_2: difference_w_m_2, 
-        line_item_total_price: line_item_total_price, 
-        order_total_price: order_total_price, 
-        line_item_quantity: difference_w_m_2, 
-        line_item_price: line_item_price, 
-        product: product.model_number,
-        order_type: 'Retoure'
-      }) if @operational_data.is_a?(Array)
     end
   
 end

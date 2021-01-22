@@ -388,7 +388,7 @@ class ProductsController < ApplicationController
           remaining_order_items = remaining_order_items.abs
         end
           line_item_total_price = remaining_order_items * line_item_price
-          sku_type =SkuType.last.sku_type
+          sku_type = SkuType&.last&.sku_type
           @operational_data.push({
             new_modeprofi_inventory: new_modeprofi_inventory, 
             difference_w_m_2: remaining_order_items, 

@@ -115,10 +115,10 @@ class ReservationsController < ApplicationController
 
     def destroy_else_update_item(item,index,qty)
       if params[:new_qty][index].to_i == 0            #Destroy Else Update
-          puts("**********DESTROYED**#{index}*****variant_id******#{item.variant_id}*********")
+          Rails.logger.info("**********DESTROYED**#{index}*****variant_id******#{item.variant_id}*********")
           item.destroy
       else
-          puts("*******Update********")
+          Rails.logger.info("*******Update********")
           pricing =  params[:price][index]
           item.order_qty = params[:new_qty][index]
           item.remain_qty = qty
@@ -133,11 +133,11 @@ class ReservationsController < ApplicationController
       if params[:new_qty][index].to_i < item.order_qty.to_i       #calculating quatity for existing lineitems
           value = item.order_qty.to_i - params[:new_qty][index].to_i
           qty = actual_qty.to_i + value
-          puts("*******less with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*******")
+          Rails.logger.info("*******less with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*******")
       elsif params[:new_qty][index].to_i > item.order_qty.to_i
           value =  params[:new_qty][index].to_i - item.order_qty.to_i
           qty = actual_qty.to_i - value
-          puts("*******greater with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*****")
+          Rails.logger.info("*******greater with total: #{qty}  and actual is:#{actual_qty.to_i} and value is #{value}*****")
       end
       return qty
     end
@@ -149,7 +149,7 @@ class ReservationsController < ApplicationController
       result = update_inventory(variant_id_new, remaining_qty)
       model.inventory = remaining_qty
       model.save
-      puts("*****model_inventory:#{model.inventory }*******remaining quantity: #{remaining_qty}*******")
+      Rails.logger.info("*****model_inventory:#{model.inventory }*******remaining quantity: #{remaining_qty}*******")
       create_lineitem =  Lineitem.create(
           variant_id: variant_id_new,
           shopify_product_id: params["product_id"][index].to_i,
@@ -256,16 +256,16 @@ class ReservationsController < ApplicationController
         end
     end
     def scenario_1_cash(difference_w_m,line_item_quantity,product,line_item,modeprofi_inventory,order)
-      line_item_price =line_item.price.to_f
+      line_item_price = line_item.price.to_f
       line_item_total_price = line_item.total.to_f
       order_total_price = order.total.to_f
       difference_w_m_2 = line_item_quantity - difference_w_m
       new_modeprofi_inventory = modeprofi_inventory - difference_w_m_2
       product.modeprofi_inventory = new_modeprofi_inventory
       product.save
-      puts("********Total Retoure items : #{difference_w_m_2}***********")
-      puts("********subtotal of lineitem price : #{line_item_total_price}***********")
-      puts("********Total of order price : #{order_total_price}***********")
+      Rails.logger.info("********Total Retoure items : #{difference_w_m_2}***********")
+      Rails.logger.info("********subtotal of lineitem price : #{line_item_total_price}***********")
+      Rails.logger.info("********Total of order price : #{order_total_price}***********")
       line_item_total_price = line_item_price * difference_w_m_2.to_f
       if @operational_data.is_a?(Array)
         @operational_data.push({

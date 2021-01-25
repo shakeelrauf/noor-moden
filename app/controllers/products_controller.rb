@@ -12,6 +12,9 @@ class ProductsController < ApplicationController
   # GET /products
   # GET /products.json
   def index
+    if SkuType.all.count < 1
+      SkuType.create(sku_type: "Restware")
+    end
     @syncing_status = InventorySetting.last.is_syncing
     @sku_type = SkuType&.last&.sku_type
     if params[:query].present?
@@ -38,7 +41,7 @@ class ProductsController < ApplicationController
   end
 
   def change_sku_type
-    if params[:sku_type]
+    if params[:sku_type]  
       type = SkuType.last
       if type.present?
         type.sku_type = params[:sku_type]
@@ -376,31 +379,35 @@ class ProductsController < ApplicationController
         product.modeprofi_inventory = new_modeprofi_inventory
         product.save
         line_item_total_price = line_item_quantity * line_item_price
-        @operational_data.push({
-          new_modeprofi_inventory: new_modeprofi_inventory, 
-          difference_w_m_2: line_item_quantity, 
-          line_item_total_price: line_item_total_price, 
-          order_total_price: order_total_price, 
-          line_item_quantity: line_item_quantity, 
-          line_item_price: line_item_price, 
-          product: product.model_number,
-          order_type: 'Sold'
-        }) if @operational_data.is_a?(Array)
+        if line_item_quantity.to_i > 0
+          @operational_data.push({
+            new_modeprofi_inventory: new_modeprofi_inventory, 
+            difference_w_m_2: line_item_quantity, 
+            line_item_total_price: line_item_total_price, 
+            order_total_price: order_total_price, 
+            line_item_quantity: line_item_quantity, 
+            line_item_price: line_item_price, 
+            product: product.model_number,
+            order_type: 'Sold'
+          }) if @operational_data.is_a?(Array)
+        end
         if remaining_order_items.to_i < 0
           remaining_order_items = remaining_order_items.abs
         end
           line_item_total_price = remaining_order_items * line_item_price
           sku_type = SkuType&.last&.sku_type
-          @operational_data.push({
-            new_modeprofi_inventory: new_modeprofi_inventory, 
-            difference_w_m_2: remaining_order_items, 
-            line_item_total_price: line_item_total_price, 
-            order_total_price: order_total_price, 
-            line_item_quantity: remaining_order_items, 
-            line_item_price: line_item_price, 
-            product: sku_type,
-            order_type: 'Sold'
-          }) if @operational_data.is_a?(Array)
+          if remaining_order_items.to_i > 0
+            @operational_data.push({
+              new_modeprofi_inventory: new_modeprofi_inventory, 
+              difference_w_m_2: remaining_order_items, 
+              line_item_total_price: line_item_total_price, 
+              order_total_price: order_total_price, 
+              line_item_quantity: remaining_order_items, 
+              line_item_price: line_item_price, 
+              product: sku_type,
+              order_type: 'Sold'
+            }) if @operational_data.is_a?(Array)
+          end
     end
 
     def payment_by_cash(product,new_qty,total,order_sum,line_item_price)  # "difference_w_m" stands for difference between webhook inventory and modeprofi inventory

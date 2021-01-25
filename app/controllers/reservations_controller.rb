@@ -164,7 +164,6 @@ class ReservationsController < ApplicationController
     end
 
     def payment_by_cash(order)
-      byebug
       @operational_data = []
       order.lineitems.each do |line_item|
         product = Product.find_by(variant_id: line_item.variant_id)
@@ -187,7 +186,6 @@ class ReservationsController < ApplicationController
     end
 
     def payment_by_invoice(order)
-      byebug
       @operational_data = []
       order.lineitems.each do |line_item|
         product = Product.find_by(variant_id: line_item.variant_id)
@@ -199,7 +197,6 @@ class ReservationsController < ApplicationController
         webhook_inventory = line_item.remain_qty.to_i +  line_item.order_qty.to_i
         difference_w_m = webhook_inventory - modeprofi_inventory
         if difference_w_m >= line_item_quantity
-          byebug
           scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
         else
           new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
@@ -229,7 +226,6 @@ class ReservationsController < ApplicationController
       product.save
       line_item_total_price = line_item_quantity * line_item_price
       if line_item_quantity.to_i > 0
-        byebug
         @operational_data.push({
           new_modeprofi_inventory: new_modeprofi_inventory, 
           difference_w_m_2: line_item_quantity, 
@@ -247,7 +243,6 @@ class ReservationsController < ApplicationController
         line_item_total_price = remaining_order_items * line_item_price
         sku_type =SkuType.last.sku_type
         if remaining_order_items.to_i > 0
-          byebug
           @operational_data.push({
             new_modeprofi_inventory: new_modeprofi_inventory, 
             difference_w_m_2: remaining_order_items, 

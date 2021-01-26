@@ -187,7 +187,7 @@ class ReservationsController < ApplicationController
 
     def payment_by_invoice(order)
       @operational_data = []
-      order.lineitems.each do |line_item|
+      order.lineitems.order(:created_at).each do |line_item|
         product = Product.find_by(variant_id: line_item.variant_id)
         line_item_quantity = line_item.order_qty.to_i
         line_item_price =line_item.price.to_f
@@ -199,9 +199,11 @@ class ReservationsController < ApplicationController
         if difference_w_m >= line_item_quantity
           scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
         else
+          puts("******** Modiprofi Inventory before save:#{product.modeprofi_inventory} ///////// #{line_item_quantity} ")
           new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
           product.modeprofi_inventory = new_modeprofi_inventory
           product.save
+          puts("******** Modiprofi Inventory after save:#{product.modeprofi_inventory} ///////// #{line_item_quantity}  ")
           if @operational_data.is_a?(Array)
             @operational_data.push({
               new_modeprofi_inventory: new_modeprofi_inventory, 

@@ -45,6 +45,9 @@
               <td>
                 <%= link_to 'Detail', order_path(order, order_id: count) %>
               </td>
+              <td>
+                <%= link_to 'download', "/file/#{order.id}" if has_file? order.id %>
+              </td>
               <% if current_user.role == "admin" %>
                 <td>
                   <%= link_to 'Delete', order, method: :delete, data: { confirm: 'Are you sure?' } %>

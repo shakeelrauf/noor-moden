@@ -30,7 +30,7 @@ Rails.application.routes.draw do
   get '/get_hook' => 'webhook#get_hook'
   get '/cancel_order' => 'orders#cancel_order'
   get '/print_order' => 'orders#print_order'
-
+  get "/file/:id" => "orders#get_file"
   get '/suggestions' => 'products#suggestions', as: 'suggestions'
   get '/modelnumbers' => 'products#modelnumbers', as: 'modelnumbers'
 

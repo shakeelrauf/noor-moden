@@ -181,7 +181,7 @@ class ReservationsController < ApplicationController
           item[:order_total_price] = sum
           item
         end
-        export_order_to_csv(@operational_data)
+        export_order_to_csv(@operational_data, order.id)
       end
     end
 
@@ -216,7 +216,7 @@ class ReservationsController < ApplicationController
           end
         end
       end
-      export_order_to_csv(@operational_data) if @operational_data.present?
+      export_order_to_csv(@operational_data, order.id) if @operational_data.present?
     end
 
     def scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)

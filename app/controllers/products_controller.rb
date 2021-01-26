@@ -272,13 +272,14 @@ class ProductsController < ApplicationController
           )
         end
       end
+
       if @operational_data.present?
         sum = @operational_data.collect{|item| item[:line_item_quantity].to_f * item[:line_item_price].to_f}.sum
         @operational_data.map do |item|
           item[:order_total_price] = sum
           item
         end
-        export_order_to_csv(@operational_data)
+        export_order_to_csv(@operational_data, order.id)
       end
     end
     redirect_to products_path, notice: 'Your Inventory Has been updated.'

@@ -22,6 +22,12 @@ class OrdersController < ApplicationController
     @lineitems = @order.lineitems
   end
 
+  def get_file
+    order_id = params[:id]
+    @file = "#{ENV['EXPORT_STORAGE_PATH']}/orders/#{order_id}.csv"
+    send_file @file
+  end
+
   # GET /orders/new
   def new
     @order = Order.new

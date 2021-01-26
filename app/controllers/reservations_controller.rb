@@ -187,7 +187,7 @@ class ReservationsController < ApplicationController
 
     def payment_by_invoice(order)
       @operational_data = []
-      order.lineitems.order(:created_at)each do |line_item|
+      order.lineitems.order(:created_at).each do |line_item|
         product = Product.find_by(variant_id: line_item.variant_id)
         line_item_quantity = line_item.order_qty.to_i
         line_item_price =line_item.price.to_f

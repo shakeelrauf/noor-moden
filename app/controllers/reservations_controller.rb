@@ -165,7 +165,7 @@ class ReservationsController < ApplicationController
 
     def payment_by_cash(order)
       @operational_data = []
-      order.lineitems.each do |line_item|
+      order.lineitems.order(:created_at).each do |line_item|
         product = Product.find_by(variant_id: line_item.variant_id)
         line_item_quantity = line_item.order_qty.to_i
         webhook_inventory = line_item.remain_qty.to_i +  line_item.order_qty.to_i
@@ -218,6 +218,7 @@ class ReservationsController < ApplicationController
       end
       export_order_to_csv(@operational_data) if @operational_data.present?
     end
+
     def scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
       remaining_order_items = modeprofi_inventory - line_item_quantity
       line_item_quantity = line_item_quantity - remaining_order_items.abs

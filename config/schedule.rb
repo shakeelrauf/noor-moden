@@ -7,12 +7,9 @@
 #
 # set :output, "/path/to/my/cron_log.log"
 #
-every 2.minutes do
-	rake "export_products_db:to_csv"
-end
-#
-every 1.days do
-	rake "export_products_db:to_csv"
-end
+set :chronic_options, hours24: true
 
+every 1.day, at: '3:00' do
+	rake "export_products_db:to_csv"
+end
 # Learn more: http://github.com/javan/whenever

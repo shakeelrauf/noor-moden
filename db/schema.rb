@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_20_103142) do
+ActiveRecord::Schema.define(version: 2021_01_27_094148) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -86,6 +86,7 @@ ActiveRecord::Schema.define(version: 2021_01_20_103142) do
     t.date "reservation_expiry_date"
     t.string "note"
     t.string "paidtype"
+    t.boolean "has_file", default: false
   end
 
   create_table "products", force: :cascade do |t|
@@ -115,6 +116,12 @@ ActiveRecord::Schema.define(version: 2021_01_20_103142) do
 
   create_table "spreadsheets", force: :cascade do |t|
     t.string "file_type"
+    t.datetime "created_at", null: false
+    t.datetime "updated_at", null: false
+  end
+
+  create_table "taxes", force: :cascade do |t|
+    t.float "percentage", default: 0.0
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
   end

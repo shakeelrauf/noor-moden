@@ -75,6 +75,14 @@ class OrdersController < ApplicationController
       end
       product.inventory = qty
       product.save
+      if order.reserve_status == false
+        if item.standard_modiprofi_sold_quantity.present?
+          cancelled_modeprofi_qty = item.standard_modiprofi_sold_quantity.to_i
+          already_existing_qty = product.modeprofi_inventory.to_i
+          product.modeprofi_inventory = already_existing_qty + cancelled_modeprofi_qty
+          product.save
+        end
+      end
     end
     order.status = "Canceled"
     order.save
@@ -152,6 +160,16 @@ class OrdersController < ApplicationController
     end
   end
 
+  def invoice_order_list
+    if params[:query].present?
+      @invoice_orders = Order.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 50)
+    else
+      @invoice_orders = Order.paginate(page: params[:page], per_page: 50)
+    end
+      @invoice_orders = @invoice_orders.order("created_at desc")
+      @invoice_sorted_orders = @invoice_orders.all.group_by {|item| item.created_at.to_date }
+  end
+  
   private
     # Use callbacks to share common setup or constraints between actions.
     def set_order

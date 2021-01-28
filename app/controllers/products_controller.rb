@@ -15,8 +15,8 @@ class ProductsController < ApplicationController
     if SkuType.all.count < 1
       SkuType.create(sku_type: "Restware")
     end
+    
     @syncing_status = InventorySetting.last.is_syncing
-    @sku_type = SkuType&.last&.sku_type
     if params[:query].present?
       @products = Product.search_by_shopify_ids(params[:query]).paginate(page: params[:page], per_page: 10)
     else
@@ -232,22 +232,8 @@ class ProductsController < ApplicationController
       db_ids.zip(new_qtys, totals, actual_qtys, line_item_prices).each do |id, new_qty, total, actual_qty, line_item_price|  
         product = Product.find(id)
         qty = product.inventory - new_qty.to_i
-        if params["order_type"] == "order"
-          if params["paidtype"] == "Cash"
-            payment_by_cash(product,new_qty,total,order_sum,line_item_price)
-          end
-        elsif params["order_type"] == "invoice"
-          if params["paidtype"] == "Invoice Cash" || params["paidtype"] == "Invoice Card"
-            payment_by_invoice_cash_or_card(product,new_qty,total,order_sum,line_item_price)
-          end
-        end
         if product.variant_id.present?
-          result = update_inventory(product.variant_id, qty)
-          if InventorySetting.last.is_syncing == true
-            product.inventory = qty
-            product.save
-          end
-          Lineitem.create(
+          line_item = Lineitem.create(
             variant_id: product.variant_id,
             shopify_product_id: product.shopify_product_id,
             product_id: product.id,
@@ -261,7 +247,7 @@ class ProductsController < ApplicationController
         else
           product.inventory = qty
           product.save
-          Lineitem.create(
+          line_item = Lineitem.create(
             product_id: product.id,
             order_qty: new_qty,
             remain_qty: qty,
@@ -270,6 +256,23 @@ class ProductsController < ApplicationController
             sku: product.model_number,
             price: line_item_price
           )
+        end
+        if params["order_type"] == "order"
+          if params["paidtype"] == "Cash"
+            payment_by_cash(line_item,product,new_qty,total,order_sum,line_item_price)
+          end
+        elsif params["order_type"] == "invoice"
+          if params["paidtype"] == "Invoice Cash" || params["paidtype"] == "Invoice Card"
+            payment_by_invoice_cash_or_card(line_item,product,new_qty,total,order_sum,line_item_price)
+          end
+        end
+
+        if product.variant_id.present?
+          result = update_inventory(product.variant_id, qty)
+          if InventorySetting.last.is_syncing == true
+            product.inventory = qty
+            product.save
+          end
         end
       end
 
@@ -286,6 +289,7 @@ class ProductsController < ApplicationController
   end
 
   def start_scanning
+    @sku_type = SkuType&.last&.sku_type
     session[:create_order_random_token] = SecureRandom.hex
   end
 
@@ -343,7 +347,7 @@ class ProductsController < ApplicationController
       params.require(:product).permit(:shopify_product_id, :inventory,:modeprofi_inventory, :barcode, :price, :variant_id, :model_number, :sync_with_modeprofi)
     end
 
-    def payment_by_invoice_cash_or_card(product,new_qty,total,order_sum,line_item_price)
+    def payment_by_invoice_cash_or_card(line_item,product,new_qty,total,order_sum,line_item_price)
       line_item_quantity = new_qty.to_i
       line_item_price =line_item_price.to_f
       line_item_total_price = total.to_f
@@ -352,11 +356,13 @@ class ProductsController < ApplicationController
       webhook_inventory = product.inventory
       difference_w_m = webhook_inventory - modeprofi_inventory
       if difference_w_m >= line_item_quantity
-        scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
+        scenario_3_for_bill(line_item,webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
       else
       new_modeprofi_inventory = modeprofi_inventory - new_qty.to_i
       product.modeprofi_inventory = new_modeprofi_inventory
       product.save
+      line_item.standard_modiprofi_sold_quantity = line_item_quantity
+      line_item.save
       puts("********Total Sold items : #{new_qty.to_i}***********")
       puts("********subtotal of lineitem price : #{line_item_total_price}***********")
       puts("********Total of order price : #{order_total_price}***********")
@@ -373,7 +379,7 @@ class ProductsController < ApplicationController
       end
     end
 
-    def scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
+    def scenario_3_for_bill(line_item,webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
         remaining_order_items = modeprofi_inventory - line_item_quantity
         line_item_quantity = line_item_quantity - remaining_order_items.abs
         new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
@@ -381,6 +387,8 @@ class ProductsController < ApplicationController
         product.save
         line_item_total_price = line_item_quantity * line_item_price
         if line_item_quantity.to_i > 0
+          line_item.standard_modiprofi_sold_quantity = line_item_quantity
+          line_item.save
           @operational_data.push({
             new_modeprofi_inventory: new_modeprofi_inventory, 
             difference_w_m_2: line_item_quantity, 
@@ -411,20 +419,20 @@ class ProductsController < ApplicationController
           end
     end
 
-    def payment_by_cash(product,new_qty,total,order_sum,line_item_price)  # "difference_w_m" stands for difference between webhook inventory and modeprofi inventory
+    def payment_by_cash(line_item,product,new_qty,total,order_sum,line_item_price)  # "difference_w_m" stands for difference between webhook inventory and modeprofi inventory
       line_item_quantity = new_qty.to_i
       webhook_inventory = product.inventory
       modeprofi_inventory = product.modeprofi_inventory
       difference_w_m = webhook_inventory - modeprofi_inventory
       if difference_w_m < line_item_quantity
-        scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
+        scenario_1_cash(line_item,difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
       end
       # if difference_w_m >= line_item_quantity
       #   scenario_3_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
       # end
     end
     
-    def scenario_1_cash(difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
+    def scenario_1_cash(line_item,difference_w_m,line_item_quantity,modeprofi_inventory,product,order_sum,line_item_price,total)
       line_item_price =line_item_price.to_f
       line_item_total_price = total.to_f
       order_total_price = order_sum.to_f
@@ -433,6 +441,8 @@ class ProductsController < ApplicationController
       product.modeprofi_inventory = new_modeprofi_inventory
       product.save
       puts("********Total of RETUORE : #{difference_w_m_2}***********")
+      line_item.standard_modiprofi_sold_quantity = difference_w_m_2.to_i
+      line_item.save
       line_item_total_price = line_item_price * difference_w_m_2.to_f
       @operational_data.push({
         new_modeprofi_inventory: new_modeprofi_inventory, 

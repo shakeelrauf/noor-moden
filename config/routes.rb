@@ -36,5 +36,6 @@ Rails.application.routes.draw do
 
   get '/approve_reservation' => 'reservations#approve_reservation', as: 'approvereservation'
   post '/update_reservation' => 'reservations#update_reservation', as: 'update_reservation'
+  get '/invoice_order_list' => 'orders#invoice_order_list', as: 'invoice_order_list'
 
 end

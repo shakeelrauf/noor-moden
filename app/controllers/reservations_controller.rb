@@ -172,7 +172,7 @@ class ReservationsController < ApplicationController
         modeprofi_inventory = product.modeprofi_inventory
         difference_w_m = webhook_inventory - modeprofi_inventory
         if difference_w_m < line_item_quantity
-          scenario_1_cash(difference_w_m,line_item_quantity,product,line_item,modeprofi_inventory,order)
+          scenario_1_cash(line_item,difference_w_m,line_item_quantity,product,modeprofi_inventory,order)
         end
       end
       if @operational_data.present?
@@ -187,7 +187,7 @@ class ReservationsController < ApplicationController
 
     def payment_by_invoice(order)
       @operational_data = []
-      order.lineitems.each do |line_item|
+      order.lineitems.order(:created_at).each do |line_item|
         product = Product.find_by(variant_id: line_item.variant_id)
         line_item_quantity = line_item.order_qty.to_i
         line_item_price =line_item.price.to_f
@@ -197,11 +197,15 @@ class ReservationsController < ApplicationController
         webhook_inventory = line_item.remain_qty.to_i +  line_item.order_qty.to_i
         difference_w_m = webhook_inventory - modeprofi_inventory
         if difference_w_m >= line_item_quantity
-          scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
+          scenario_3_for_bill(line_item,webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
         else
+          puts("******** Modiprofi Inventory before save:#{product.modeprofi_inventory} ///////// #{line_item_quantity} ")
           new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
           product.modeprofi_inventory = new_modeprofi_inventory
           product.save
+          line_item.standard_modiprofi_sold_quantity = line_item_quantity.to_i
+          line_item.save
+          puts("******** Modiprofi Inventory after save:#{product.modeprofi_inventory} ///////// #{line_item_quantity}  ")
           if @operational_data.is_a?(Array)
             @operational_data.push({
               new_modeprofi_inventory: new_modeprofi_inventory, 
@@ -219,7 +223,7 @@ class ReservationsController < ApplicationController
       export_order_to_csv(@operational_data, order.id) if @operational_data.present?
     end
 
-    def scenario_3_for_bill(webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
+    def scenario_3_for_bill(line_item,webhook_inventory,modeprofi_inventory,difference_w_m,product,line_item_quantity,line_item_price,line_item_total_price,order_total_price)
       remaining_order_items = modeprofi_inventory - line_item_quantity
       line_item_quantity = line_item_quantity - remaining_order_items.abs
       new_modeprofi_inventory = modeprofi_inventory - line_item_quantity
@@ -227,6 +231,8 @@ class ReservationsController < ApplicationController
       product.save
       line_item_total_price = line_item_quantity * line_item_price
       if line_item_quantity.to_i > 0
+        line_item.standard_modiprofi_sold_quantity = line_item_quantity.to_i
+        line_item.save
         @operational_data.push({
           new_modeprofi_inventory: new_modeprofi_inventory, 
           difference_w_m_2: line_item_quantity, 
@@ -256,7 +262,7 @@ class ReservationsController < ApplicationController
           }) if @operational_data.is_a?(Array)
         end
     end
-    def scenario_1_cash(difference_w_m,line_item_quantity,product,line_item,modeprofi_inventory,order)
+    def scenario_1_cash(line_item,difference_w_m,line_item_quantity,product,modeprofi_inventory,order)
       line_item_price = line_item.price.to_f
       line_item_total_price = line_item.total.to_f
       order_total_price = order.total.to_f
@@ -264,6 +270,8 @@ class ReservationsController < ApplicationController
       new_modeprofi_inventory = modeprofi_inventory - difference_w_m_2
       product.modeprofi_inventory = new_modeprofi_inventory
       product.save
+      line_item.standard_modiprofi_sold_quantity = difference_w_m_2.to_i
+      line_item.save
       Rails.logger.info("********Total Retoure items : #{difference_w_m_2}***********")
       Rails.logger.info("********subtotal of lineitem price : #{line_item_total_price}***********")
       Rails.logger.info("********Total of order price : #{order_total_price}***********")

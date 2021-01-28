@@ -13,15 +13,20 @@
     <div>
       <input type="text" name="" placeholder="Enter SKU" id="manual-sku-code"><button id="manual-entry" style="margin-bottom: 4px;margin-left: 4px;" class="btn btn-primary btn-sm">Manual Entry</button>
     </div>
-     <div style="margin-left:10%">
+     <div style="margin-left:0%">
       <input type="radio" class="check_payment_status" id="payment_cash" name="payment" value="Cash" checked>
       <label for="payment_cash">Cash</label>
-      <%# <input type="radio" class="check_radio_status" id="reservation" name="order" value="reservation"> %>
       <input type="radio" class="check_payment_status" id="payment_invoice_cash" name="payment" value="Invoice Cash" >
       <label for="payment_invoice_cash">Invoice Cash</label>
       <input type="radio" class="check_payment_status" id="payment_invoice_card" name="payment" value="Invoice Card" >
       <label for="payment_invoice_card">Invoice Card</label>
      </div>
+    <div>
+      <form action="/change_sku_type" method="post" id="change_sku_type" class=" ">
+        <label>Sku Type</label>
+        <input class="" value="<%=@sku_type%>" name="sku_type" type="text" placeholder="Enter Sku Type">
+      </form>
+    </div>
     <div>
       <input class="order-name" type="text" placeholder="Enter Order Name">
     </div>
@@ -368,10 +373,15 @@
   $("#create-order").click(function(){
     console.log("clicked")
     check_payment_type();
+    $("#change_sku_type").submit()
     $("#reserve_status_false").prop('checked', false);
     $("#reservation_expiry_date")[0].value = ""
     $(".order_type")[0].value = "order"
-    $("#order-form").submit()
+    setTimeout(
+      function() 
+      {
+        $("#order-form").submit()
+      }, 100);
   })
 
   $("#create-reservation").click(function(){
@@ -385,17 +395,27 @@
         alert("Expiry Date Required")
       }
       else{
+        $("#change_sku_type").submit()
+        setTimeout(
+      function() 
+      {
         $("#order-form").submit()
+      }, 100);
       }
   })
 
   $("#create-Invoice").click(function(){
     console.log("invoice clicked")
     check_payment_type();
+    $("#change_sku_type").submit()
     $("#reserve_status_false").prop('checked', false);
-     $('#reservation_expiry_date')[0].value = ""
-     $(".order_type")[0].value = "invoice"
-    $("#order-form").submit()
+    $('#reservation_expiry_date')[0].value = ""
+    $(".order_type")[0].value = "invoice"
+    setTimeout(
+      function() 
+      {
+        $("#order-form").submit()
+      }, 100);
   })
 
 </script>

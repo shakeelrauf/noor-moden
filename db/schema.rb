@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 2021_01_20_103142) do
+ActiveRecord::Schema.define(version: 2021_01_27_102341) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -69,6 +69,7 @@ ActiveRecord::Schema.define(version: 2021_01_20_103142) do
     t.string "sku"
     t.datetime "created_at", null: false
     t.datetime "updated_at", null: false
+    t.integer "standard_modiprofi_sold_quantity"
     t.index ["order_id"], name: "index_lineitems_on_order_id"
   end
 

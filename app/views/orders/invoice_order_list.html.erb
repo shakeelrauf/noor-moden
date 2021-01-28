@@ -1,8 +1,8 @@
 <div class="container">
   <p id="notice"><%= notice %></p>
-  <h1>Orders</h1>
+  <h1>Invoice Orders</h1>
   <%#= link_to 'New Order', new_order_path, class: "btn btn-primary", style: 'float: right;margin-bottom: 10px;'%>
-  <form action="/orders">
+  <form action="/invoice_order_list">
     <div class="form-group">
       <input type="text" name="query" value="<%= params[:query] %>" class='form-control col-6' placeholder="Search using product or variant id">
     </div>
@@ -25,10 +25,10 @@
     <tbody>
       <%# count = 0 %>
       <%# date = "" %>
-      <% @sorted_orders.each do |order, val| %>
+      <% @invoice_sorted_orders.each do |order, val| %>
         <% count = val.count + 1 %>
         <% val.each_with_index do |order, index| %>
-          <%if order.reserve_status == false && order.paidtype == "Cash" %>
+          <% if order.reserve_status == false && ( order.paidtype == "Invoice Cash" || order.paidtype == "Invoice Card" )  %>
           <tr>
             <td><%= count -=  1 %></td>
             <td><%= order.label %></td>
@@ -66,7 +66,7 @@
     </tbody>
   </table>
   <div class="pagination-index">
-    <%= will_paginate @orders %>
+    <%= will_paginate @invoice_orders %>
   </div>
 </div>
 

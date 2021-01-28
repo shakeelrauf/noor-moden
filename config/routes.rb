@@ -1,4 +1,5 @@
 Rails.application.routes.draw do
+  resources :tax, only: [:index, :update]
   resources :lineitems
   resources :orders
   resources :reservations

@@ -209,7 +209,7 @@ class ProductsController < ApplicationController
       session.delete(:create_order_random_token)
       returned_data = SaleOrderHandler.new(params).generate_order
       if returned_data.present?
-        export_order_to_csv(returned_data)
+        export_order_to_csv(returned_data[:operational_data], returned_data[:order_id])
       end
     end
     redirect_to products_path, notice: 'Your Inventory Has been updated.'

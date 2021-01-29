@@ -28,7 +28,7 @@ class SaleOrderHandler
       item[:order_total_price] = sum
       item
     end
-    return @operational_data
+    return {order_id: order.id , operational_data: @operational_data}
 	end
 
 	private 

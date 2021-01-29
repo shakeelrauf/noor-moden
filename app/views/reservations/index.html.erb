@@ -46,8 +46,8 @@
             <td><%= order.status %></td>
             <%if order.note.present?%>
                 <td>
-                    <%if order.note.length >= 35%>
-                        <%= order.note[0...35]+' . . .'%><input style="height:20px;font-size:10px" type="button" id="open_note" value="See" data-toggle="modal" data-target="#myModal<%=order.id%>">
+                    <%if order.note.length >= 10%>
+                        <%= order.note[0...10]+' . . .'%><input style="height:20px;font-size:10px" type="button" id="open_note" value="See" data-toggle="modal" data-target="#myModal<%=order.id%>">
                     <%else%>
                          <%= order.note %>
                     <%end%>

@@ -42,7 +42,13 @@ class ProductsController < ApplicationController
   end
 
   def change_sku_type
-    if params[:sku_type]  
+    if params[:sku_type].empty?
+      type = SkuType.last
+      if type.present?
+        type.sku_type = "Restware"
+        type.save
+      end
+    else
       type = SkuType.last
       if type.present?
         type.sku_type = params[:sku_type]

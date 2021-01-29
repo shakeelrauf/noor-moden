@@ -22,13 +22,22 @@
       <ul class="navbar-nav">
         <% if user_signed_in? %>
         <li class="nav-item">
+          <%= link_to('Overview', overview_index_path, class: "nav-link") %>
+        </li>
+        <li class="nav-item">
           <%= link_to('Products', products_path, class: "nav-link") %>
         </li>
         <li class="nav-item">
           <%= link_to('Orders', orders_path, class: "nav-link") %>
+        </li> 
+        <li class="nav-item">
+          <%= link_to('Invoice Orders', invoice_order_list_path, class: "nav-link") %>
         </li>
         <li class="nav-item">
           <%= link_to('Reservations', reservations_path, class: "nav-link") %>
+        </li>
+        <li class="nav-item">
+          <%= link_to('Tax', tax_index_path, class: "nav-link") %>
         </li>
         <li class="nav-item">
           <a href="/products/start_scanning" class="nav-link">Start Scanning</a>

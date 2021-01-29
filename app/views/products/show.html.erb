@@ -13,6 +13,7 @@
         <tr><td>ModiProfi Invertory:</td><td><%= @product.modeprofi_inventory %></td></tr>
         <tr><td>Shopify Product Id:</td><td><%= @product.shopify_product_id %></td></tr>
         <tr><td>Variant Id:</td><td><%= @product.variant_id %></td></tr>
+        <tr><td>Reserve Inventory</td><td><% quantity = reserve_inventory(@product)%> <%= quantity if quantity.to_i > 0 %></td></tr>
       </table>
       <%= link_to 'Edit', edit_product_path(@product.id), class: "btn btn-primary" %>
       <!-- <button class="btn btn-primary" id="start-scanning">Start Scanning</button> -->

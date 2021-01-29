@@ -1,4 +1,6 @@
 Rails.application.routes.draw do
+  resources :tax, only: [:index, :update]
+  resources :overview, only: [:index]
   resources :lineitems
   resources :orders
   resources :reservations
@@ -26,15 +28,15 @@ Rails.application.routes.draw do
   post '/change_sync' => 'products#change_sync'
   post '/change_sku_type' => 'products#change_sku_type'
   # For details on the DSL available within this file, see http://guides.rubyonrails.org/routing.html
-
   get '/get_hook' => 'webhook#get_hook'
   get '/cancel_order' => 'orders#cancel_order'
   get '/print_order' => 'orders#print_order'
-
+  get "/file/:id" => "orders#get_file"
   get '/suggestions' => 'products#suggestions', as: 'suggestions'
   get '/modelnumbers' => 'products#modelnumbers', as: 'modelnumbers'
 
   get '/approve_reservation' => 'reservations#approve_reservation', as: 'approvereservation'
   post '/update_reservation' => 'reservations#update_reservation', as: 'update_reservation'
+  get '/invoice_order_list' => 'orders#invoice_order_list', as: 'invoice_order_list'
 
 end

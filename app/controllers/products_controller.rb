@@ -12,6 +12,10 @@ class ProductsController < ApplicationController
   # GET /products
   # GET /products.json
   def index
+    if SkuType.all.count < 1
+      SkuType.create(sku_type: "Restware")
+    end
+    
     @syncing_status = InventorySetting.last.is_syncing
     @sku_type = SkuType&.last&.sku_type
     if params[:query].present?
@@ -38,10 +42,12 @@ class ProductsController < ApplicationController
   end
 
   def change_sku_type
-    if params[:sku_type]
+    if params[:sku_type]  
       type = SkuType.last
-      type.sku_type = params[:sku_type]
-      type.save
+      if type.present?
+        type.sku_type = params[:sku_type]
+        type.save
+      end
     end
   end
 
@@ -210,6 +216,7 @@ class ProductsController < ApplicationController
   end
 
   def start_scanning
+    @sku_type = SkuType&.last&.sku_type
     session[:create_order_random_token] = SecureRandom.hex
   end
 
@@ -266,5 +273,4 @@ class ProductsController < ApplicationController
     def product_params
       params.require(:product).permit(:shopify_product_id, :inventory,:modeprofi_inventory, :barcode, :price, :variant_id, :model_number, :sync_with_modeprofi)
     end
-  
 end

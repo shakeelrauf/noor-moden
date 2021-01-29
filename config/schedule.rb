@@ -7,14 +7,9 @@
 #
 # set :output, "/path/to/my/cron_log.log"
 #
-# every 2.hours do
-#   command "/usr/bin/some_great_command"
-#   runner "MyModel.some_method"
-#   rake "some:great:rake:task"
-# end
-#
-every 1.days do
+set :chronic_options, hours24: true
+
+every 1.day, at: '3:00' do
 	rake "export_products_db:to_csv"
 end
-
 # Learn more: http://github.com/javan/whenever

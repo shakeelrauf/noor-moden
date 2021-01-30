@@ -81,7 +81,7 @@
             
             <td><%= order.created_at.strftime('%d/%m/%Y, %I:%M:%S:%p') %></td>
             <%if order.reservation_expiry_date.present? %>
-                <td style=""  ><%= order.reservation_expiry_date.strftime('%d/%m/%Y') %> <%if order.reservation_expiry_date.strftime('%d/%m/%Y') <= Date.today.strftime('%d/%m/%Y') %> <span class="badge badge-danger  blink_me">Deadline</span><%end%></td>
+                <td style=""  ><%= order.reservation_expiry_date.strftime('%d/%m/%Y') %> <%if order.reservation_expiry_date.strftime('%d/%m/%Y').to_date <= Date.today.strftime('%d/%m/%Y').to_date %> <span class="badge badge-danger  blink_me">Deadline</span><%end%></td>
             <%else%>
             <td> </td>
             <%end%>

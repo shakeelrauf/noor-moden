@@ -76,9 +76,17 @@ class ReservationsController < ApplicationController
         if params["order_type_update"].present?
            order_type_value = params["order_type_update"]
         end
-        order = order.update(order_qty: quantity, total: price,reservation_expiry_date: expiry_date,note: params["order_note"],paidtype: order_type_value)
+        update = order.update(order_qty: quantity, total: price,reservation_expiry_date: expiry_date,note: params["order_note"],paidtype: order_type_value)
+        if params["submit_type"].present?
+          if params["submit_type"] == "approve_reservation"
+            approve_reservation_for_order_invoice(order)
+          else
+            redirect_to reservations_path , notice: "Reservation Updated Successfully."
+          end
+        else
+          redirect_to reservations_path , notice: "Reservation Updated Successfully."
+        end
     end
-    redirect_to reservations_path , notice: "Reservation Updated Successfully."
  end
 
   def destroy
@@ -90,7 +98,8 @@ class ReservationsController < ApplicationController
   end
 
   def approve_reservation
-    order = Order.find(params["format"].to_i)
+    order = Order.find(params["order_id"].to_i)
+    order.paidtype = params["paidtype"]
     order.reserve_status = false
     order.save
     if order.paidtype.present?
@@ -111,6 +120,19 @@ class ReservationsController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def order_params
       params.require(:order).permit(:variant_id, :product_id, :order_qty, :remain_qty, :total)
+    end
+
+    def approve_reservation_for_order_invoice(order)
+      order.reserve_status = false
+      order.save
+      if order.paidtype.present?
+        if order.paidtype == "Cash"
+          payment_by_cash(order)
+        elsif order.paidtype == "Invoice Cash" || order.paidtype == "Invoice Card"
+          payment_by_invoice(order)
+        end
+      end
+      redirect_to reservations_url , notice: 'Order status is updated.'  
     end
 
     def destroy_else_update_item(item,index,qty)

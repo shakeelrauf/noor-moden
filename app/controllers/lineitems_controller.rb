@@ -92,6 +92,15 @@ class LineitemsController < ApplicationController
                },
         :headers => {
           'X-Shopify-Access-Token' => ENV['Access_Token']})
+
+      @result = HTTParty.put("#{ENV['SHOPIFY_API_URL2']}/variants/#{variant_id}.json",
+        :body => { 
+                  "variant": {:id=> variant_id, 
+                    :inventory_quantity=> qty,
+                  }
+               },
+        :headers => {
+          'X-Shopify-Access-Token' => ENV['Access_Token2']})
     end
 
     def set_lineitem

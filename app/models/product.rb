@@ -114,12 +114,26 @@ class Product < ApplicationRecord
              },
       :headers => {
         'X-Shopify-Access-Token' => ENV['Access_Token']})
+
+    @result = HTTParty.put("#{ENV['SHOPIFY_API_URL2']}/variants/#{variant_id}.json",
+      :body => { 
+                "variant": {:id=> variant_id, 
+                  :inventory_quantity=> qty,
+                  :price => price
+                }
+             },
+      :headers => {
+        'X-Shopify-Access-Token' => ENV['Access_Token2']})
   end
 
   def self.delete_variant(product_id, variant_id)
       @result = HTTParty.delete("#{ENV['SHOPIFY_API_URL']}/products/#{product_id}/variants/#{variant_id}.json",
         :headers => {
           'X-Shopify-Access-Token' => ENV['Access_Token']})
+      
+      @result = HTTParty.delete("#{ENV['SHOPIFY_API_URL2']}/products/#{product_id}/variants/#{variant_id}.json",
+        :headers => {
+          'X-Shopify-Access-Token' => ENV['Access_Token2']})
     end
 
 end

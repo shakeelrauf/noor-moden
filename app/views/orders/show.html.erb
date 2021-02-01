@@ -18,8 +18,13 @@
 <div class="container">
 
   <p id="notice"><%= notice %></p>
-
-  <a href="/print_order?id=<%=params[:id] %>&real_order_id=<%= params[:order_id]%>" class="btn btn-primary">Print Order</a>
+  <% if @order.paidtype != "Cash" %>
+    <a href="/print_order?id=<%=params[:id] %>&real_order_id=<%= params[:order_id]%>" class="btn btn-primary">Print Invoice</a>
+    <%# <a href="" class="btn btn-primary">Edit Invoice</a> %>
+    <span><%= link_to 'Edit Invoice' , edit_order_path , class: "btn btn-primary disabled" %></span>
+  <%else%>
+    <a href="/print_order?id=<%=params[:id] %>&real_order_id=<%= params[:order_id]%>" class="btn btn-primary">Print Order</a>
+  <%end%>
   <br/>
   <br/>
 
@@ -71,13 +76,19 @@
     </tbody>
 </table>
 
-  <%#= link_to 'Edit', edit_order_path(@order) %> 
-  <%= link_to 'Back', orders_path %>
+  <%#= link_to 'Edit', edit_order_path(@order) %>
+  <% if @order.paidtype != "Cash" %> 
+    <%= link_to 'Back', invoice_order_list_path %>
+  <%else%>
+    <%= link_to 'Back', orders_path %>
+  <%end%>
 </div>
 <!-- <footer>
   <div class="footer-invoice-text">Reklamationen richten Sie bitte nur schriftlich mit einer Rechnungskopie und unverzuglich an unsere Firma. Refullungsort und Gerichtsstand ist Neuss. Die Ware bleibt bis zur restlosen Bezahlung unser Eigentum. </div>
 </footer> -->
+
 <style type="text/css">
+
   .no-visible{
     visibility: hidden;
   }

@@ -41,25 +41,31 @@
             <%end%>
             <td><%= order.status %></td>
             <td><%= order.created_at.strftime('%d/%m/%Y, %I:%M:%S:%p') %></td>
-             <%# <td><%= link_to 'Edit', edit_order_path(order)</td> %>
+            <%if order.status == "Processed" %>
+              <td><%= link_to 'Edit', edit_order_path(order)%></td>
+            <%else%>
+              <td></td>
+            <%end%>
               <td>
                 <%= link_to 'Detail', order_path(order, order_id: count) %>
               </td>
               <td>
                 <%= link_to 'download', "/file/#{order.id}" if has_file? order.id %>
               </td>
-              <% if current_user.role == "admin" %>
+              <% if current_user.role == "admin" && order.status == "Canceled" %>
                 <td>
-                  <%= link_to 'Delete', order, method: :delete, data: { confirm: 'Are you sure?' } %>
+                  <%= link_to 'Delete', order, method: :delete, data: { confirm: 'Are you sure you want to delete order?' } %>
                 </td>
+              <%else%>
+                <td></td>
               <% end %>
                 <% if order.status === 'Processed' %>
                   <td>
-                    <%= link_to 'Cancel', cancel_order_path(id: order.id), data: { confirm: 'Are you sure?' } %>
+                    <%= link_to 'Cancel', cancel_order_path(id: order.id), data: { confirm: 'Are you sure you want to cancel order?' } %>
                   </td>
                 <% end %>
               </td>
-          </tr>
+          <%# </tr> %>
           <%end%>
         <% end %>
       <% end %>

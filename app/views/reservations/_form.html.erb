@@ -11,7 +11,7 @@
           </div>
         </div>
         <div style="width:100%" >
-            <%= form_tag  update_reservation_path(order),method: :post , html: {id: "order-form" } do %>
+            <%= form_tag  update_reservation_path(order),method: :post , id: "reservation-form"  do %>
                 <div id="">
                     <div class="expiry-date-style"><b>Expiry date: </b><input type="text" id="reservation_expiry_date" value="<%=order.reservation_expiry_date.strftime("%m/%d/%Y") if order.reservation_expiry_date.present? %>"  name="reservation_expiry_date[]" data-provide='datepicker' placeholder="Set Reservation Expiry Date" class="set_position form-control" style="width:30%" required></div>
                     <textarea style="margin-left:3%;width:28.7%" name="order_note" id="order_note" value="" placeholder="Add Note Here" class="form-control"><%=order.note%></textarea><br>
@@ -19,7 +19,7 @@
                         <% order.lineitems.each do |item| %>
                             <div class="row  main-div">
                                 <div class="outer-div">
-                                    <div class="Row">
+                                    <div class="Row">  <%# Donot add anything in this div, i repeat DO NOT %>
                                         <div class="sku-style Column"><b>Variant Sku:</b> <%=item.sku%></div>
                                         <div class="Column">
                                         <span><b>Quantity: </b></span><input type="number" name="new_qty[]" value="<%= item.order_qty%>" class="form-control"  id="inventory-qty" max="" required="true"></div>
@@ -50,13 +50,18 @@
                 </div>
                 <hr>
                 <input style="display: none;" id="order_type_update" type="text" name="order_type_update" placeholder="">
-                <button type="submit" class="btn btn-primary btn_style" id="check_on_submit" data-disable-with="Updating...">Update</button><br><br>
+                <input style="display: none;" id="submit_type" type="text" name="submit_type" placeholder="">
             <%end%>
         <div>    
     <%end%>
 <%end%>
+<button type="" class="btn btn-primary btn_style" id="update_btn" style="margin-left: 36%;" id="check_on_submit" data-disable-with="Updating...">Update</button>
+<button type="" class="btn btn-primary btn_style" id="order_btn" data-disable-with="Updating...">Order</button>
+<button type="" class="btn btn-primary btn_style" id="invoice_btn" data-disable-with="Updating...">Invoice</button>
+<br><br>
 
 <script>
+
 $('#reservation_expiry_date').datepicker('setStartDate', new Date());
 </script>
 <script>
@@ -206,14 +211,20 @@ function remove_existing(elmnt){
       {
         $("#check_cash").prop("checked",true)
         $("#order_type_update")[0].value = "Cash"
+        $("#order_btn").prop("disabled",false)
+        $("#invoice_btn").prop("disabled",true)
       }
       else if (check_status == "Invoice Cash"){
         $("#check_invoice_cash").prop("checked",true)
         $("#order_type_update")[0].value = "Invoice Cash"
+        $("#order_btn").prop("disabled",true)
+        $("#invoice_btn").prop("disabled",false)
       }
       else if(check_status == "Invoice Card"){
-        $("#check_invoice_cash").prop("checked",true)
+        $("#check_invoice_card").prop("checked",true)
         $("#order_type_update")[0].value = "Invoice Card"
+        $("#order_btn").prop("disabled",true)
+        $("#invoice_btn").prop("disabled",false)
       }
     var newval = $("#order_type_update")[0].value
     console.log("newval",newval)
@@ -221,24 +232,54 @@ function remove_existing(elmnt){
   $('input[type=radio][name=check]').change(function() {
      if($('#check_cash').is(':checked')){
       $("#order_type_update")[0].value = "Cash"
+       $("#order_btn").prop("disabled",false)
+       $("#invoice_btn").prop("disabled",true)
       console.log("working cash")
     }
     else if ($('#check_invoice_cash').is(':checked')){
       $("#order_type_update")[0].value = "Invoice Cash"
+       $("#order_btn").prop("disabled",true)
+      $("#invoice_btn").prop("disabled",false)
       console.log("working invpice cash")
     }
     else{
+      $("#order_btn").prop("disabled",true)
+      $("#invoice_btn").prop("disabled",false)
       $("#order_type_update")[0].value = "Invoice Card"
     }
 
   })
+  $("#update_btn").click(function(){
+    console.log("update btn")
+    $("#submit_type").val("update_reservation")
+   setTimeout(function() {
+        $("#reservation-form").submit()
+      }, 100);
+
+  })
+  $("#order_btn").click(function(){
+    console.log("order btn")
+    $("#submit_type").val("approve_reservation")
+    setTimeout(function() {
+    $("#reservation-form").submit()
+    }, 100);
+
+  })
+  $("#invoice_btn").click(function(){
+    console.log("invoice btn")
+    $("#submit_type").val("approve_reservation")
+    setTimeout(function() {
+    $("#reservation-form").submit()
+    }, 100);
+  })
+
 </script>
 
 <style>
 .btn_style{
     text-align: center;
-    margin-left: 39%;
-    width: 25%;
+    margin-right: 1%;
+    /* width: 25%; */
 }
 .outer-div{
     width:100%;

@@ -76,9 +76,17 @@ class ReservationsController < ApplicationController
         if params["order_type_update"].present?
            order_type_value = params["order_type_update"]
         end
-        order = order.update(order_qty: quantity, total: price,reservation_expiry_date: expiry_date,note: params["order_note"],paidtype: order_type_value)
+        update = order.update(order_qty: quantity, total: price,reservation_expiry_date: expiry_date,note: params["order_note"],paidtype: order_type_value)
+        if params["submit_type"].present?
+          if params["submit_type"] == "approve_reservation"
+            approve_reservation_for_order_invoice(order)
+          else
+            redirect_to reservations_path , notice: "Reservation Updated Successfully."
+          end
+        else
+          redirect_to reservations_path , notice: "Reservation Updated Successfully."
+        end
     end
-    redirect_to reservations_path , notice: "Reservation Updated Successfully."
  end
 
   def destroy
@@ -90,7 +98,8 @@ class ReservationsController < ApplicationController
   end
 
   def approve_reservation
-    order = Order.find(params["format"].to_i)
+    order = Order.find(params["order_id"].to_i)
+    order.paidtype = params["paidtype"]
     order.reserve_status = false
     order.save
     if order.paidtype.present?
@@ -111,6 +120,19 @@ class ReservationsController < ApplicationController
     # Never trust parameters from the scary internet, only allow the white list through.
     def order_params
       params.require(:order).permit(:variant_id, :product_id, :order_qty, :remain_qty, :total)
+    end
+
+    def approve_reservation_for_order_invoice(order)
+      order.reserve_status = false
+      order.save
+      if order.paidtype.present?
+        if order.paidtype == "Cash"
+          payment_by_cash(order)
+        elsif order.paidtype == "Invoice Cash" || order.paidtype == "Invoice Card"
+          payment_by_invoice(order)
+        end
+      end
+      redirect_to reservations_url , notice: 'Order status is updated.'  
     end
 
     def destroy_else_update_item(item,index,qty)
@@ -206,17 +228,19 @@ class ReservationsController < ApplicationController
           line_item.standard_modiprofi_sold_quantity = line_item_quantity.to_i
           line_item.save
           puts("******** Modiprofi Inventory after save:#{product.modeprofi_inventory} ///////// #{line_item_quantity}  ")
-          if @operational_data.is_a?(Array)
-            @operational_data.push({
-              new_modeprofi_inventory: new_modeprofi_inventory, 
-              difference_w_m_2: line_item_quantity, 
-              line_item_total_price: line_item_total_price, 
-              order_total_price: order_total_price, 
-              line_item_quantity: line_item_quantity, 
-              line_item_price: line_item_price, 
-              product: product.model_number,
-              order_type: 'Sold'
-            })
+          if line_item_quantity.to_i > 0
+            if @operational_data.is_a?(Array)
+              @operational_data.push({
+                new_modeprofi_inventory: new_modeprofi_inventory, 
+                difference_w_m_2: line_item_quantity, 
+                line_item_total_price: line_item_total_price, 
+                order_total_price: order_total_price, 
+                line_item_quantity: line_item_quantity, 
+                line_item_price: line_item_price, 
+                product: product.model_number,
+                order_type: 'Sold'
+              })
+            end
           end
         end
       end
@@ -247,20 +271,20 @@ class ReservationsController < ApplicationController
       if remaining_order_items.to_i < 0
         remaining_order_items = remaining_order_items.abs
       end
-        line_item_total_price = remaining_order_items * line_item_price
-        sku_type =SkuType.last.sku_type
-        if remaining_order_items.to_i > 0
-          @operational_data.push({
-            new_modeprofi_inventory: new_modeprofi_inventory, 
-            difference_w_m_2: remaining_order_items, 
-            line_item_total_price: line_item_total_price, 
-            order_total_price: order_total_price, 
-            line_item_quantity: remaining_order_items, 
-            line_item_price: line_item_price, 
-            product: sku_type,
-            order_type: 'Sold'
-          }) if @operational_data.is_a?(Array)
-        end
+      line_item_total_price = remaining_order_items * line_item_price
+      sku_type =SkuType.last.sku_type
+      if remaining_order_items.to_i > 0
+        @operational_data.push({
+          new_modeprofi_inventory: new_modeprofi_inventory, 
+          difference_w_m_2: remaining_order_items, 
+          line_item_total_price: line_item_total_price, 
+          order_total_price: order_total_price, 
+          line_item_quantity: remaining_order_items, 
+          line_item_price: line_item_price, 
+          product: sku_type,
+          order_type: 'Sold'
+        }) if @operational_data.is_a?(Array)
+      end
     end
     def scenario_1_cash(line_item,difference_w_m,line_item_quantity,product,modeprofi_inventory,order)
       line_item_price = line_item.price.to_f
@@ -276,17 +300,19 @@ class ReservationsController < ApplicationController
       Rails.logger.info("********subtotal of lineitem price : #{line_item_total_price}***********")
       Rails.logger.info("********Total of order price : #{order_total_price}***********")
       line_item_total_price = line_item_price * difference_w_m_2.to_f
-      if @operational_data.is_a?(Array)
-        @operational_data.push({
-          new_modeprofi_inventory: new_modeprofi_inventory, 
-          difference_w_m_2: difference_w_m_2, 
-          line_item_total_price: line_item_total_price, 
-          order_total_price: order_total_price, 
-          line_item_quantity: difference_w_m_2, #line_item_ordered quantity after calculation
-          line_item_price: line_item_price, 
-          product: product.model_number,
-          order_type: 'Retoure'
-        })
+      if difference_w_m_2.to_i > 0
+        if @operational_data.is_a?(Array)
+          @operational_data.push({
+            new_modeprofi_inventory: new_modeprofi_inventory, 
+            difference_w_m_2: difference_w_m_2, 
+            line_item_total_price: line_item_total_price, 
+            order_total_price: order_total_price, 
+            line_item_quantity: difference_w_m_2, #line_item_ordered quantity after calculation
+            line_item_price: line_item_price, 
+            product: product.model_number,
+            order_type: 'Retoure'
+          })
+        end
       end
     end
 

@@ -57,35 +57,38 @@
             <%end%>
             <!-- Modal -->
             <div class="modal fade" id="myModal<%=order.id%>" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
-            <div class="modal-dialog" role="document">
-                <div class="modal-content">
-                    <div class="modal-header">
-                        <h5 class="modal-title" id="exampleModalLongTitle">Note</h5>
-                        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                        <span aria-hidden="true">&times;</span>
-                        </button>
-                    </div>
-                    <div class="modal-body">
-                        <%if order.note.present?%>
-                            <%=order.note%>
-                        <%end%>
-                    </div>
-                    <div class="modal-footer">
-                        <button type="button"  class="btn btn-secondary" data-dismiss="modal">Close</button>
-                        <%# <button class="btn btn-light" id="clickthis" style="color:white"><%= link_to 'Edit Note',edit_reservation_path(order)%></button> 
-                    </div>
-                </div>
+              <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                          <h5 class="modal-title" id="exampleModalLongTitle">Note</h5>
+                          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                          </button>
+                      </div>
+                      <div class="modal-body">
+                          <%if order.note.present?%>
+                              <%=order.note%>
+                          <%end%>
+                      </div>
+                      <div class="modal-footer">
+                          <button type="button"  class="btn btn-secondary" data-dismiss="modal">Close</button>
+                          <%# <button class="btn btn-light" id="clickthis" style="color:white"><%= link_to 'Edit Note',edit_reservation_path(order)%></button> 
+                      </div>
+                  </div>
+              </div>
             </div>
-            </div>
+      
+            
             <td><%= order.created_at.strftime('%d/%m/%Y, %I:%M:%S:%p') %></td>
             <%if order.reservation_expiry_date.present? %>
-                <td style=""  ><%= order.reservation_expiry_date.strftime('%d/%m/%Y') %> <%if order.reservation_expiry_date.strftime('%d/%m/%Y') <= Date.today.strftime('%d/%m/%Y') %> <span class="badge badge-danger  blink_me">Deadline</span><%end%></td>
+                <td style=""  ><%= order.reservation_expiry_date.strftime('%d/%m/%Y') %> <%if order.reservation_expiry_date.strftime('%d/%m/%Y').to_date <= Date.today.strftime('%d/%m/%Y').to_date %> <span class="badge badge-danger  blink_me">Deadline</span><%end%></td>
             <%else%>
             <td> </td>
             <%end%>
             <%if order.status == "Processed" %>
-                <td><%= link_to 'Approve', approvereservation_path(order, order_id: count),data: { confirm: 'Are you sure?' } %></td>
+                <td><a href="#" id="approve_button" data-toggle="modal" data-target="#approvemodal" onclick="openfun(<%= [order.id,order.paidtype] %>)">Approve</a></td>
                 <td>  <%= link_to 'Edit', edit_reservation_path(order)  %></td>
+                <%# <%= link_to 'Approve', approvereservation_path(order, order_id: count),id: 'approve_button',data: { confirm: 'Are you sure?' } %> 
             <%else%>
             <td></td>
             <td></td>
@@ -93,15 +96,16 @@
               <td>
                 <%= link_to 'Detail', reservation_path(order, order_id: count) %>
               </td>
-              <% if current_user.role == "admin" %>
+              <% if current_user.role == "admin" && order.status == "Canceled" %>
                 <td>
-                  <%= link_to 'Delete', reservation_path(order,:param1 => "reservation"), method: :delete, data: { confirm: 'Are you sure?' } %>
+                  <%= link_to 'Delete', reservation_path(order,:param1 => "reservation"), method: :delete, data: { confirm: 'Are you sure you want to delete order?' } %>
                 </td>
+              <%else%>
+                <td></td>
               <% end %>
                 <% if order.status === 'Processed' %>
                   <td>
-                  <%  %>
-                    <%= link_to 'Cancel', cancel_order_path(id: order.id, :param1 => "reservation" ), data: { confirm: 'Are you sure?' } %>
+                    <%= link_to 'Cancel', cancel_order_path(id: order.id, :param1 => "reservation" ), data: { confirm: 'Are you sure you want to cancel order?' } %>
                   </td>
                 <% end %>
               </td>
@@ -111,11 +115,117 @@
       <% end %>
     </tbody>
   </table>
-
+  <form action="/approve_reservation" method="get" id="submit_and_approve"  style="display:none">
+  <input class="" value="" id="paidtype_id" name="paidtype" type="text">
+  <input class="" value="" id="order_id_" name="order_id" type="text">
+  </form>
   <div class="pagination-index">
     <%= will_paginate @orders %>
   </div>
 </div>
+     <!-- Modal -->
+            <div class="modal fade" id="approvemodal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+              <div class="modal-dialog" role="document">
+                  <div class="modal-content">
+                      <div class="modal-header">
+                          <h5 class="modal-title" id="exampleModalLongTitle">Order Payment Type</h5>
+                          <button type="button" class="close " data-dismiss="modal" aria-label="Close">
+                          <span aria-hidden="true">&times;</span>
+                          </button>
+                      </div>
+                      <div class="modal-body">
+                        <div style="margin-left:2.5%" class="Row">
+                          <div style="float:right;margin-right:34%">
+                            <input type="radio" class="check_status" id="check_cash" name="check" value="Cash"  >
+                            <label for="payment_cash">Cash</label>
+                            <input type="radio" class="check_status" id="check_invoice_cash" name="check" value="Invoice Cash">
+                            <label for="payment_invoice_cash">Invoice Cash</label>
+                            <input type="radio" class="check_status" id="check_invoice_card" name="check" value="Invoice Card">
+                            <label for="payment_invoice_card">Invoice Card</label>
+                          </div>
+                        </div>                      
+                      </div>
+                      <div class="modal-footer">
+                          <button type="button" id="form_submit"  class="btn btn-secondary " data-dismiss="modal">Approve</button>
+                      </div>
+                  </div>
+              </div>
+            </div>
+
+            <script>
+            function openfun(order){
+              check_status = order[1]
+              $("#order_id_")[0].value = order[0]
+                if (check_status == "Cash")
+                {
+                  $("#check_cash").prop("checked",true)
+                  $("#paidtype_id")[0].value = "Cash"
+                }
+                else if (check_status == "Invoice Cash"){
+                  $("#check_invoice_cash").prop("checked",true)
+                  $("#paidtype_id")[0].value = "Invoice Cash"
+                  }
+                else if(check_status == "Invoice Card"){
+                  $("#check_invoice_card").prop("checked",true)
+                  $("#paidtype_id")[0].value = "Invoice Card"
+                }
+
+              $('input[type=radio][name=check]').change(function() {
+              if($('#check_cash').is(':checked')){
+                $("#paidtype_id")[0].value = "Cash"
+                console.log("working cash")
+              }
+              else if ($('#check_invoice_cash').is(':checked')){
+                $("#paidtype_id")[0].value = "Invoice Cash"
+                console.log("working invpice cash")
+              }
+              else{
+                $("#paidtype_id")[0].value = "Invoice Card"
+              }
+
+            })
+            }
+            $("#form_submit").click(function(e){
+              var status= $(".check_status")[0].value
+              console.log("submit",status)
+              if (status == ""){
+                alert("select paidtype")
+              }
+              else{
+                setTimeout(
+                function() 
+                {
+                $("#submit_and_approve").submit()
+                }, 100);
+              }
+            })
+            // $("#approve_button").click(function(e){
+            //    if (check_status == "Cash")
+            //     {
+            //       $("#check_cash").prop("checked",true)
+            //     }
+            //     else if (check_status == "Invoice Cash"){
+            //       $("#check_invoice_cash").prop("checked",true)
+            //       }
+            //     else if(check_status == "Invoice Card"){
+            //       $("#check_invoice_card").prop("checked",true)
+            //     }
+            // })
+            //   $('input[type=radio][name=check]').change(function() {
+            //   if($('#check_cash').is(':checked')){
+            //     $("#paidtype_id")[0].value = "Cash"
+            //     console.log("working cash")
+            //   }
+            //   else if ($('#check_invoice_cash').is(':checked')){
+            //     $("#paidtype_id")[0].value = "Invoice Cash"
+            //     console.log("working invpice cash")
+            //   }
+            //   else{
+            //     $("#paidtype_id")[0].value = "Invoice Card"
+            //   }
+
+            // })
+            </script>
 
 <style type="text/css">
   .pagination-index .pagination{

@@ -9,7 +9,6 @@
   
   <br><br>
   <div class="manual-entry-row">
-
     <div>
       <input type="text" name="" placeholder="Enter SKU" id="manual-sku-code"><button id="manual-entry" style="margin-bottom: 4px;margin-left: 4px;" class="btn btn-primary btn-sm">Manual Entry</button>
     </div>
@@ -23,8 +22,8 @@
      </div>
     <div>
       <form action="/change_sku_type" method="post" id="change_sku_type" class=" ">
-        <label>Restware</label>
-        <input class="" value="" name="sku_type" type="text" placeholder="Sku Type If Needed">
+        <label>Sku Name</label>
+        <input class="" value="Restware" name="sku_type" type="text" placeholder="Sku Name If Needed">
       </form>
     </div>
     <div>
@@ -56,7 +55,8 @@
       <%= check_box :reserve_status,false%> 
       <input type="text" style="display: none;"  id="reservation_expiry_date"  name="reservation_expiry_date[]" data-provide='datepicker' placeholder="Set Reservation Expiry Date" >
       <input style="display: none;" class="order-name-input" type="text" name="label" placeholder="Enter Order Name">
-      <input style="display: none;" class="order_type" type="text" name="order_type" placeholder="">      
+      <input style="display: none;" class="order_type" type="text" name="order_type" placeholder=""> 
+      <input style="display: none;" type="text" id="order_note" name="order_note" placeholder="">       
       <%= hidden_field_tag "random_token", session[:create_order_random_token] %>
     </form> 
     <%# <div class="row"> %>
@@ -69,6 +69,25 @@
       <%# </div> %>
       <br>
       <br>
+</div>
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLongTitle" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+      <div class="modal-content">
+          <div class="modal-header">
+              <h5 class="modal-title" id="exampleModalLongTitle">Note</h5>
+              <button type="button" class="close close_modal" data-dismiss="modal" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+              </button>
+          </div>
+          <div class="modal-body">
+            <textarea type="text" id="note_for_reservation" placeholder="Enter Note"></textarea>
+          </div>
+          <div class="modal-footer">
+              <button type="button"  class="btn btn-secondary close_modal" data-dismiss="modal">Add</button>
+          </div>
+      </div>
+  </div>
 </div>
 <script type="text/javascript">
   $("#manual-sku-code").on('keyup', function (e) {
@@ -383,24 +402,36 @@
         $("#order-form").submit()
       }, 100);
   })
-
+  var modal_status = false
   $("#create-reservation").click(function(){
     console.log("reservation clicked")
     check_payment_type();
      $('#reservation_expiry_date').val($(".pick_value_date")[0].value)
      $("#reserve_status_false").prop('checked', true);
      $(".order_type")[0].value = "reservation"
+     
      if ($(".pick_value_date")[0].value == "")
       {
         alert("Expiry Date Required")
       }
       else{
-        $("#change_sku_type").submit()
-        setTimeout(
-      function() 
-      {
-        $("#order-form").submit()
-      }, 100);
+        if (modal_status == false){$("#myModal").modal('show');}
+        $(".close_modal").click(function(){
+          var note_val = $("#note_for_reservation").val()
+          $("#order_note").val(note_val)
+          modal_status = true
+        })
+        if (modal_status == true){
+          $("#change_sku_type").submit()
+          setTimeout(
+            function() 
+            {
+              $("#order-form").submit()
+            }, 100);
+          }
+          else{
+            $("#myModal").modal('show');
+          }
       }
   })
 
@@ -446,6 +477,9 @@
   }
   .btn_margin{
     margin-left:1%;
+  }
+  #note_for_reservation{
+    width: 100%;
   }
 
 </style>

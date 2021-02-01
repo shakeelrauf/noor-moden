@@ -100,7 +100,7 @@ class LineitemsController < ApplicationController
                   }
                },
         :headers => {
-          'X-Shopify-Access-Token' => ENV['Access_Token2']})
+          'X-Shopify-Access-Token' => ENV['Access_Token2']}) if ENV['SHOPIFY_API_URL2']
     end
 
     def set_lineitem

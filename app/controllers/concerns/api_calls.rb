@@ -3,7 +3,7 @@ module ApiCalls
 
   def update_inventory(variant_id, qty)
     update_inventory_on_store(ENV['SHOPIFY_API_URL'],ENV['Access_Token'], variant_id, qty)
-    update_inventory_on_store(ENV['SHOPIFY_API_URL2'],ENV['Access_Token2'], variant_id, qty)
+    update_inventory_on_store(ENV['SHOPIFY_API_URL2'],ENV['Access_Token2'], variant_id, qty) if ENV['SHOPIFY_API_URL2']
   end
 
   def update_inventory_on_store url,  access_token, variant_id, qty
@@ -32,7 +32,7 @@ module ApiCalls
 
   def update_variant_price(variant_id, qty, price)
     update_variant_price_on_store(ENV['SHOPIFY_API_URL'], ENV['Access_Token'], variant_id, qty, price)
-    update_variant_price_on_store(ENV['SHOPIFY_API_URL2'], ENV['Access_Token2'], variant_id, qty, price)
+    update_variant_price_on_store(ENV['SHOPIFY_API_URL2'], ENV['Access_Token2'], variant_id, qty, price) if ENV['SHOPIFY_API_URL2']
   end
 
   def update_variant_price_on_store url, access_token, variant_id, qty, price
@@ -48,8 +48,8 @@ module ApiCalls
   end
 
   def update_customer(customer_id,country,accepts_marketing)
-    update_customer_on_store ENV['SHOPIFY_API_URL'], ENV['Access_Token'], customer_id, country, accepts_marketing    
-    update_customer_on_store ENV['SHOPIFY_API_URL2'], ENV['Access_Token2'], customer_id, country, accepts_marketing    
+    update_customer_on_store(ENV['SHOPIFY_API_URL'], ENV['Access_Token'], customer_id, country, accepts_marketing)    
+    update_customer_on_store(ENV['SHOPIFY_API_URL2'], ENV['Access_Token2'], customer_id, country, accepts_marketing)  if ENV['SHOPIFY_API_URL2']
   end
 
   def update_customer_on_store url, access_token, customer_id, country, accepts_marketing
